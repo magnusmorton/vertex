@@ -1,0 +1,2 @@
+#define Vertex_VERSION_MAJOR @Vertex_VERSION_MAJOR@
+#define Vertex_VERSION_MINOR @Vertex_VERSION_MINOR@
