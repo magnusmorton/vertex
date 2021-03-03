@@ -10,10 +10,24 @@
 using namespace llvm;
 
 PreservedAnalyses GraphPass::run(Function &F, FunctionAnalysisManager &M) {
-	std::cout << F.getName().str() << "\n";
+	visit(F);
 	return PreservedAnalyses::all();
 };
 
+
+void GraphPass::visitCallInst(CallInst &callinst) {
+	Function* func = callinst.getCalledFunction();
+	StringRef name = "none";
+	if (func)
+		name = func->getName();
+	outs() << name << "\n";
+}
+
+
+void GraphPass::visitAllocaInst(AllocaInst &allInst) {
+	std::cout << "foooooooooooooooooooooooooooooo" << "\n";
+	outs() << allInst << "\n";
+}
 
 extern "C" ::llvm::PassPluginLibraryInfo LLVM_ATTRIBUTE_WEAK
 llvmGetPassPluginInfo() {
@@ -21,7 +35,7 @@ llvmGetPassPluginInfo() {
     LLVM_PLUGIN_API_VERSION, "GraphPass", "v0.1",
     [](PassBuilder &PB) {
 	std::cout << "gjasdlk;jaskld;fjklsdajkl;fjaslkd;f" << "\n";
-
+	
 	PB.registerVectorizerStartEPCallback(
 		[](
 			llvm::FunctionPassManager  &PM,

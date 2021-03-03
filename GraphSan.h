@@ -3,12 +3,16 @@
 
 #include "llvm/Pass.h"
 #include "llvm/IR/PassManager.h"
+#include "llvm/IR/InstVisitor.h"
+
 
 namespace llvm {
-	class GraphPass : public PassInfoMixin<GraphPass> {
+	class GraphPass : public PassInfoMixin<GraphPass>, public InstVisitor<GraphPass> {
 	public:
-		static char ID;
 		PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
+
+		void visitCallInst(CallInst &callinst);
+		void visitAllocaInst(AllocaInst &allInst);
 	};
 }
 
