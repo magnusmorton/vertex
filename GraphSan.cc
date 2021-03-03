@@ -14,6 +14,10 @@ PreservedAnalyses GraphPass::run(Function &F, FunctionAnalysisManager &M) {
 	return PreservedAnalyses::all();
 };
 
+PreservedAnalyses GraphPass::run(Module &F, ModuleAnalysisManager &M) {
+	visit(F);
+	return PreservedAnalyses::all();
+};
 
 void GraphPass::visitCallInst(CallInst &callinst) {
 	Function* func = callinst.getCalledFunction();
@@ -35,14 +39,13 @@ llvmGetPassPluginInfo() {
     LLVM_PLUGIN_API_VERSION, "GraphPass", "v0.1",
     [](PassBuilder &PB) {
 	std::cout << "gjasdlk;jaskld;fjklsdajkl;fjaslkd;f" << "\n";
-	
-	PB.registerVectorizerStartEPCallback(
+
+	PB.registerPipelineStartEPCallback(
 		[](
-			llvm::FunctionPassManager  &PM,
-			llvm::PassBuilder::OptimizationLevel Level) {
+			llvm::ModulePassManager &PM
+			) {
 			PM.addPass(GraphPass());
 		});
-
     }
   };
 }

@@ -10,6 +10,7 @@ namespace llvm {
 	class GraphPass : public PassInfoMixin<GraphPass>, public InstVisitor<GraphPass> {
 	public:
 		PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
+		PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);
 
 		void visitCallInst(CallInst &callinst);
 		void visitAllocaInst(AllocaInst &allInst);
