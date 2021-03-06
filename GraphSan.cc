@@ -9,6 +9,7 @@
 
 using namespace llvm;
 
+
 PreservedAnalyses GraphPass::run(Function &F, FunctionAnalysisManager &M) {
 	visit(F);
 	return PreservedAnalyses::all();
@@ -16,7 +17,7 @@ PreservedAnalyses GraphPass::run(Function &F, FunctionAnalysisManager &M) {
 
 PreservedAnalyses GraphPass::run(Module &F, ModuleAnalysisManager &M) {
 	visit(F);
-	return PreservedAnalyses::all();
+	return PreservedAnalyses::none();
 };
 
 void GraphPass::visitCallInst(CallInst &callinst) {

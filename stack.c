@@ -8,7 +8,7 @@ struct Node {
 int main()
 {
 	struct Node n;
-	n.val =97;
+	n.val = 97;
 	n.next = NULL;
 	printf("node val %d\n", n.val);
 	return 0;
