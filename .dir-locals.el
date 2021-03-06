@@ -1,0 +1,5 @@
+((nil . ((indent-tabs-mode . nil)))
+ (c-mode . ((c-file-style .  "BSD")
+	    (c-basic-offset . 2)))
+ (c++-mode . ((c-file-style .  "BSD")
+	      (c-basic-offset . 2))))
