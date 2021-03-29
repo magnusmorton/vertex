@@ -10,6 +10,8 @@
 static int labels;
 const int base_size = 7;
 
+static int inited = 0;
+
 static dfsan_label *roots;
 static size_t root_count = 0;
 static size_t roots_size = 0;
@@ -46,6 +48,7 @@ int numPlaces (int n) {
 }
 
 int init_san() {
+  printf("initing runtime....\n");
   dfsan_label *temp = malloc(ROOT_CHUNK * sizeof(dfsan_label));
   int rc = 1;
 
@@ -55,6 +58,7 @@ int init_san() {
     roots_size = ROOT_CHUNK;
   }
 
+  inited = 1;
   return rc;
 }
 
@@ -73,6 +77,9 @@ int add_root(dfsan_label label) {
 }
 
 void _create_label(const char* label, void *ptr, size_t size) {
+  if (!inited)
+    init_san();
+  
   dfsan_label lab = dfsan_create_label(label, 0);
   dfsan_set_label(lab, ptr, size);
   printf("ROOT at ptr %p, label %s\n", ptr, label);
