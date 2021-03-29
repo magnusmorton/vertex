@@ -10,7 +10,7 @@
 
 using namespace llvm;
 
-FunctionCallee create_func;
+FunctionCallee create_func, check_func;
 
 PreservedAnalyses GraphPass::run(Function &F, FunctionAnalysisManager &M) {
   IRBuilder<> builder(F.getContext());
@@ -35,8 +35,8 @@ PreservedAnalyses GraphPass::run(Module &M, ModuleAnalysisManager &MAM) {
     Type::getInt64Ty(ctx)
     );
   
-  FunctionCallee check_fun = M.getOrInsertFunction(
-    "_check_ptr",
+  check_func = M.getOrInsertFunction(
+    "dfs$_check_ptr",
     Type::getVoidTy(ctx),
     Type::getInt8PtrTy(ctx)
     );
@@ -55,8 +55,6 @@ void GraphPass::visitCallInst(CallInst &callinst) {
     printf("malloccccccc!!!!!!!\n");
     IRBuilder<> builder(callinst.getNextNode());
     std::vector<Value*> args;
-    Function *func = callinst.getFunction()->getParent()->getFunction("dfs$_create_label");
-    assert(func);
     Value *strptr = builder.CreateGlobalStringPtr("labbbellll");
     args.push_back(strptr);
     args.push_back(&callinst);
@@ -66,7 +64,7 @@ void GraphPass::visitCallInst(CallInst &callinst) {
       args.push_back(arg.get());
       outs() << callinst << "\n";
     }
-    builder.CreateCall(func, args);
+    builder.CreateCall(create_func, args);
   }
 }
 
