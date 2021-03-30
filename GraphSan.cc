@@ -14,7 +14,6 @@ FunctionCallee create_func, check_func;
 
 PreservedAnalyses GraphPass::run(Function &F, FunctionAnalysisManager &M) {
   IRBuilder<> builder(F.getContext());
-  outs() << "run on function\n";
   visit(F);
   return PreservedAnalyses::all();
 };
@@ -52,17 +51,13 @@ void GraphPass::visitCallInst(CallInst &callinst) {
     name = func->getName();
 
   if (name == "malloc") {
-    printf("malloccccccc!!!!!!!\n");
     IRBuilder<> builder(callinst.getNextNode());
     std::vector<Value*> args;
     Value *strptr = builder.CreateGlobalStringPtr("labbbellll");
     args.push_back(strptr);
     args.push_back(&callinst);
     for (auto& arg : callinst.args()) {
-      std::cout  << typeid(arg).name() << "\n";
-      std::cout  << arg.get() << "\n";
       args.push_back(arg.get());
-      outs() << callinst << "\n";
     }
     builder.CreateCall(create_func, args);
   }
