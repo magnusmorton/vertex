@@ -72,6 +72,13 @@ void GraphPass::visitAllocaInst(AllocaInst &allInst) {
   outs() << allInst << "\n";
 }
 
+void GraphPass::visitLoadInst(LoadInst &loadInst) {
+  IRBuilder<> builder(loadInst.getNextNode());
+  std::vector<Value*> args;
+  args.push_back(loadInst.getPointerOperand());
+  builder.CreateCall(check_func, args);
+}
+
 extern "C" ::llvm::PassPluginLibraryInfo LLVM_ATTRIBUTE_WEAK
 llvmGetPassPluginInfo() {
   return {LLVM_PLUGIN_API_VERSION, "GraphPass", "v0.1", [](PassBuilder &PB) {

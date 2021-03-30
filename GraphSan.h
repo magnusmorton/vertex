@@ -14,6 +14,7 @@ public:
 
   void visitCallInst(CallInst &callinst);
   void visitAllocaInst(AllocaInst &allInst);
+  void visitLoadInst(LoadInst &loadInst);
 };
 } // namespace llvm
 
