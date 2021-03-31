@@ -74,6 +74,25 @@ void GraphPass::visitLoadInst(LoadInst &loadInst) {
   builder.CreateCall(check_func, args);
 }
 
+void GraphPass::visitStoreInst(StoreInst &storeInst) {
+  // TODO: implement
+}
+
+void GraphPass::visitAtomicRMWInst(AtomicRMWInst &inst) {
+  // bet this never gets called
+  assert(false);
+}
+
+void GraphPass::visitAtomicCmpXchgInst(AtomicCmpXchgInst &inst) {
+  // bet this never gets called
+  assert(false);
+
+}
+
+void GraphPass::visitMemIntrinsic(MemIntrinsic &intr) {
+  //not sure what todo here
+}
+
 extern "C" ::llvm::PassPluginLibraryInfo LLVM_ATTRIBUTE_WEAK
 llvmGetPassPluginInfo() {
   return {LLVM_PLUGIN_API_VERSION, "GraphPass", "v0.1", [](PassBuilder &PB) {

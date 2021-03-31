@@ -15,6 +15,10 @@ public:
   void visitCallInst(CallInst &callinst);
   void visitAllocaInst(AllocaInst &allInst);
   void visitLoadInst(LoadInst &loadInst);
+  void visitStoreInst(StoreInst &storeInst);
+  void visitAtomicRMWInst(AtomicRMWInst &inst);
+  void visitAtomicCmpXchgInst(AtomicCmpXchgInst &inst);
+  void visitMemIntrinsic(MemIntrinsic &intr);
 };
 } // namespace llvm
 
