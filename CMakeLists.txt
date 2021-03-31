@@ -18,6 +18,7 @@ add_library(GraphSan MODULE
 
 add_library(runtime SHARED
   runtime.c
+  util.c
   )
 
 set_target_properties(runtime PROPERTIES

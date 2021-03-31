@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+
+#include "util.h"
+
 #define ROOT_CHUNK 512
 #define EDGE_CHUNK 1024
 
@@ -15,6 +18,9 @@ static int inited = 0;
 static dfsan_label *roots;
 static size_t root_count = 0;
 static size_t roots_size = 0;
+
+mag_array root_arr;
+
 
 struct memory_node {
   void *addr;
@@ -49,17 +55,8 @@ int numPlaces (int n) {
 
 int init_san() {
   printf("initing runtime....\n");
-  dfsan_label *temp = malloc(ROOT_CHUNK * sizeof(dfsan_label));
-  int rc = 1;
+  return init_array(&root_arr, ROOT_CHUNK, sizeof(dfsan_label));
 
-  if (temp) {
-    roots = temp;
-    rc = 0;
-    roots_size = ROOT_CHUNK;
-  }
-
-  inited = 1;
-  return rc;
 }
 
 int add_root(dfsan_label label) {
@@ -83,23 +80,22 @@ void _create_label(const char* label, void *ptr, size_t size) {
   dfsan_label lab = dfsan_create_label(label, 0);
   dfsan_set_label(lab, ptr, size);
   printf("ROOT at ptr %p, label %s\n", ptr, label);
-  int rc = add_root(lab);
+  int rc = array_push(&root_arr, &lab);
   assert(rc == 0);
 }
 
 void _check_ptr(void *ptr) {
   dfsan_label check = dfsan_read_label(ptr, sizeof(ptr));
 
-  for (unsigned long i = 0; i < root_count; i++) {
-    if (dfsan_has_label(check, roots[i])) {
+  for (unsigned long i = 0; i < root_arr.length; i++) {
+    dfsan_label lab = *(dfsan_label*)array_get(&root_arr, i);
+    if (dfsan_has_label(check, lab)) {
 //      add_edge();
-      printf("ptr belongs to root 0xxxxx lab %d\n", roots[i]);
+      printf("ptr belongs to root 0xxxxx lab %d\n", lab);
     }
   }
 }
 
 void finish_san() {
-  free(roots);
-  root_count = 0;
-  roots_size = 0;
+  free_array(&root_arr);
 }
