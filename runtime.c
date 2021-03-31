@@ -15,11 +15,7 @@ const int base_size = 7;
 
 static int inited = 0;
 
-static dfsan_label *roots;
-static size_t root_count = 0;
-static size_t roots_size = 0;
-
-mag_array root_arr;
+mag_array roots;
 
 
 struct memory_node {
@@ -55,22 +51,8 @@ int numPlaces (int n) {
 
 int init_san() {
   printf("initing runtime....\n");
-  return init_array(&root_arr, ROOT_CHUNK, sizeof(dfsan_label));
+  return init_array(&roots, ROOT_CHUNK, sizeof(dfsan_label));
 
-}
-
-int add_root(dfsan_label label) {
-  if (root_count == roots_size) {
-    dfsan_label *temp = realloc(roots, (roots_size + ROOT_CHUNK) * sizeof(dfsan_label));
-    if (temp) {
-      roots = temp;
-      roots_size = roots_size + ROOT_CHUNK;
-    } else
-      return 1;
-  }
-
-  roots[root_count++] = label;
-  return 0;
 }
 
 void _create_label(const char* label, void *ptr, size_t size) {
@@ -80,15 +62,15 @@ void _create_label(const char* label, void *ptr, size_t size) {
   dfsan_label lab = dfsan_create_label(label, 0);
   dfsan_set_label(lab, ptr, size);
   printf("ROOT at ptr %p, label %s\n", ptr, label);
-  int rc = array_push(&root_arr, &lab);
+  int rc = array_push(&roots, &lab);
   assert(rc == 0);
 }
 
 void _check_ptr(void *ptr) {
   dfsan_label check = dfsan_read_label(ptr, sizeof(ptr));
 
-  for (unsigned long i = 0; i < root_arr.length; i++) {
-    dfsan_label lab = *(dfsan_label*)array_get(&root_arr, i);
+  for (unsigned long i = 0; i < roots.length; i++) {
+    dfsan_label lab = *(dfsan_label*)array_get(&roots, i);
     if (dfsan_has_label(check, lab)) {
 //      add_edge();
       printf("ptr belongs to root 0xxxxx lab %d\n", lab);
@@ -97,5 +79,5 @@ void _check_ptr(void *ptr) {
 }
 
 void finish_san() {
-  free_array(&root_arr);
+  free_array(&roots);
 }
