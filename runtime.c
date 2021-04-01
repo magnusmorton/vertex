@@ -10,12 +10,13 @@
 #define ROOT_CHUNK 512
 #define EDGE_CHUNK 1024
 
-static int labels;
 const int base_size = 7;
 
 static int inited = 0;
 
 mag_array roots;
+
+mag_array root_nodes;
 
 
 struct memory_node {
@@ -51,7 +52,12 @@ int numPlaces (int n) {
 
 int init_san() {
   printf("initing runtime....\n");
-  return init_array(&roots, ROOT_CHUNK, sizeof(dfsan_label));
+  init_array(&root_nodes, ROOT_CHUNK, sizeof(struct memory_node));
+  init_array(&roots, ROOT_CHUNK, sizeof(dfsan_label));
+
+  inited = 1;
+  // realisitically, any errors are going to be unrecoverable here
+  return 0;
 
 }
 
@@ -63,21 +69,32 @@ void _create_label(const char* label, void *ptr, size_t size) {
   dfsan_set_label(lab, ptr, size);
   printf("ROOT at ptr %p, label %s\n", ptr, label);
   int rc = array_push(&roots, &lab);
-  assert(rc == 0);
+  struct memory_node nd = {.addr = ptr, .extent = size};
+  array_push(&root_nodes, &nd);
+  assert(root_nodes.length == roots.length);
 }
 
 void _check_ptr(void *ptr) {
   dfsan_label check = dfsan_read_label(ptr, sizeof(ptr));
 
+  if (!check) {
+    printf("label not found\n");
+    return;
+  }
+  
   for (unsigned long i = 0; i < roots.length; i++) {
     dfsan_label lab = *(dfsan_label*)array_get(&roots, i);
     if (dfsan_has_label(check, lab)) {
 //      add_edge();
-      printf("ptr belongs to root 0xxxxx lab %d\n", lab);
+
+      struct memory_node *nd = (struct memory_node*)array_get(&root_nodes, i);
+      printf("ptr %p belongs to root %p lab %d\n", ptr, nd->addr, lab);
+      break;
     }
   }
 }
 
 void finish_san() {
   free_array(&roots);
+  free_array(&root_nodes);
 }
