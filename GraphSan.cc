@@ -15,6 +15,8 @@ using namespace llvm;
 
 FunctionCallee create_func, check_func;
 
+Type* int64ty;
+
 PreservedAnalyses GraphPass::run(Function &F, FunctionAnalysisManager &M) {
   IRBuilder<> builder(F.getContext());
   visit(F);
@@ -24,6 +26,7 @@ PreservedAnalyses GraphPass::run(Function &F, FunctionAnalysisManager &M) {
 PreservedAnalyses GraphPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
   LLVMContext &ctx = M.getContext();
+  int64ty = Type::getInt64Ty(ctx);
   /*
     dfsan mangles function symbols on instrumented CUs. Our pass is run after
     this happens. I can't find a way of running it before with the new pass
@@ -34,7 +37,9 @@ PreservedAnalyses GraphPass::run(Module &M, ModuleAnalysisManager &MAM) {
     Type::getVoidTy(ctx),
     Type::getInt8PtrTy(ctx),
     Type::getInt8PtrTy(ctx),
-    Type::getInt64Ty(ctx)
+    int64ty,
+    Type::getInt8PtrTy(ctx),
+    int64ty
     );
   
   check_func = M.getOrInsertFunction(
@@ -54,14 +59,28 @@ void GraphPass::visitCallInst(CallInst &callinst) {
     name = func->getName();
 
   if (name == "malloc") {
+    DILocation *loc = callinst.getDebugLoc();
     IRBuilder<> builder(callinst.getNextNode());
     std::vector<Value*> args;
     Value *strptr = builder.CreateGlobalStringPtr("labbbellll");
+    
+    unsigned line;
+    Value *file;
+    if (loc) {
+      line = loc->getLine();
+      file = builder.CreateGlobalStringPtr(loc->getFilename());
+    } else {
+      line = 0;
+      file = builder.CreateGlobalStringPtr("No debug");
+    }
+    
     args.push_back(strptr);
     args.push_back(&callinst);
     for (auto& arg : callinst.args()) {
       args.push_back(arg.get());
     }
+    args.push_back(file);
+    args.push_back(ConstantInt::get(int64ty, line));
     builder.CreateCall(create_func, args);
   }
 }
