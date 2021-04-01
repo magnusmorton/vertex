@@ -1,10 +1,13 @@
+#include <iostream>
+#include <vector>
+
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/IRBuilder.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/raw_ostream.h"
-#include <iostream>
-#include <vector>
+#include "llvm/IR/DebugLoc.h"
+#include "llvm/IR/DebugInfoMetadata.h"
 
 #include "GraphSan.h"
 
