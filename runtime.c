@@ -61,20 +61,20 @@ int init_san() {
 
 }
 
-void _create_label(const char* label, void *ptr, size_t size) {
+void _create_label(const char* label, void *ptr, size_t size, const char* file, unsigned line) {
   if (!inited)
     init_san();
   
   dfsan_label lab = dfsan_create_label(label, 0);
   dfsan_set_label(lab, ptr, size);
-  printf("ROOT at ptr %p, label %s\n", ptr, label);
+  printf("ROOT at ptr %p, label %s, file %s:%d\n", ptr, label, file, line);
   int rc = array_push(&roots, &lab);
   struct memory_node nd = {.addr = ptr, .extent = size};
   array_push(&root_nodes, &nd);
   assert(root_nodes.length == roots.length);
 }
 
-void _check_ptr(void *ptr) {
+void _check_ptr(void *ptr, const char *file, unsigned line) {
   dfsan_label check = dfsan_read_label(ptr, sizeof(ptr));
 
   if (!check) {
@@ -88,7 +88,7 @@ void _check_ptr(void *ptr) {
 //      add_edge();
 
       struct memory_node *nd = (struct memory_node*)array_get(&root_nodes, i);
-      printf("ptr %p belongs to root %p lab %d\n", ptr, nd->addr, lab);
+      printf("ptr %p (%s:%d) belongs to root %p lab %d\n", ptr, file, line, nd->addr, lab);
       break;
     }
   }

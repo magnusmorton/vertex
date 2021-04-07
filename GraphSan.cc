@@ -16,6 +16,7 @@ using namespace llvm;
 FunctionCallee create_func, check_func;
 
 Type* int64ty;
+Type* charstar;
 
 PreservedAnalyses GraphPass::run(Function &F, FunctionAnalysisManager &M) {
   IRBuilder<> builder(F.getContext());
@@ -27,6 +28,7 @@ PreservedAnalyses GraphPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
   LLVMContext &ctx = M.getContext();
   int64ty = Type::getInt64Ty(ctx);
+  charstar = Type::getInt8PtrTy(ctx);
   /*
     dfsan mangles function symbols on instrumented CUs. Our pass is run after
     this happens. I can't find a way of running it before with the new pass
@@ -45,12 +47,27 @@ PreservedAnalyses GraphPass::run(Module &M, ModuleAnalysisManager &MAM) {
   check_func = M.getOrInsertFunction(
     "dfs$_check_ptr",
     Type::getVoidTy(ctx),
-    Type::getInt8PtrTy(ctx)
+    Type::getInt8PtrTy(ctx),
+    charstar,
+    int64ty
     );
   
   visit(M);
   return PreservedAnalyses::none();
 };
+
+std::pair<unsigned, Value*> getMetaData(IRBuilder<> builder, DILocation *loc) {
+  unsigned line;
+  Value *file;
+  if (loc) {
+    line = loc->getLine();
+    file = builder.CreateGlobalStringPtr(loc->getFilename());
+  } else {
+    line = 0;
+    file = builder.CreateGlobalStringPtr("No debug");
+  }
+  return std::make_pair(line, file);
+}
 
 void GraphPass::visitCallInst(CallInst &callinst) {
   Function *func = callinst.getCalledFunction();
@@ -63,16 +80,7 @@ void GraphPass::visitCallInst(CallInst &callinst) {
     IRBuilder<> builder(callinst.getNextNode());
     std::vector<Value*> args;
     Value *strptr = builder.CreateGlobalStringPtr("labbbellll");
-    
-    unsigned line;
-    Value *file;
-    if (loc) {
-      line = loc->getLine();
-      file = builder.CreateGlobalStringPtr(loc->getFilename());
-    } else {
-      line = 0;
-      file = builder.CreateGlobalStringPtr("No debug");
-    }
+    auto[line, file] = getMetaData(builder, loc);
     
     args.push_back(strptr);
     args.push_back(&callinst);
@@ -90,9 +98,10 @@ void GraphPass::visitAllocaInst(AllocaInst &allInst) {
 }
 
 void GraphPass::visitLoadInst(LoadInst &loadInst) {
+  DILocation *loc = loadInst.getDebugLoc();
   IRBuilder<> builder(loadInst.getNextNode());
-  std::vector<Value*> args;
-  args.push_back(loadInst.getPointerOperand());
+  auto[line, file] = getMetaData(builder, loc);
+  std::vector<Value*> args = {loadInst.getPointerOperand(), file, ConstantInt::get(int64ty, line)};
   builder.CreateCall(check_func, args);
 }
 
