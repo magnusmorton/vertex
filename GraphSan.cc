@@ -69,6 +69,21 @@ std::pair<unsigned, Value*> getMetaData(IRBuilder<> &builder, DILocation *loc) {
   return std::make_pair(line, file);
 }
 
+void buildLabelCall(Instruction &inst, Value* size) {
+  DILocation *loc = inst.getDebugLoc();
+  IRBuilder<> builder(inst.getNextNode());
+  std::vector<Value*> args;
+  Value *strptr = builder.CreateGlobalStringPtr("labbbellll");
+  auto[line, file] = getMetaData(builder, loc);
+  
+  args.push_back(strptr);
+  args.push_back(&inst);
+  args.push_back(size);
+  args.push_back(file);
+  args.push_back(ConstantInt::get(int64ty, line));
+  builder.CreateCall(create_func, args);
+}
+
 void GraphPass::visitCallInst(CallInst &callinst) {
   Function *func = callinst.getCalledFunction();
   StringRef name = "none";
@@ -76,20 +91,12 @@ void GraphPass::visitCallInst(CallInst &callinst) {
     name = func->getName();
 
   if (name == "malloc") {
-    DILocation *loc = callinst.getDebugLoc();
-    IRBuilder<> builder(callinst.getNextNode());
-    std::vector<Value*> args;
-    Value *strptr = builder.CreateGlobalStringPtr("labbbellll");
-    auto[line, file] = getMetaData(builder, loc);
-    
-    args.push_back(strptr);
-    args.push_back(&callinst);
+    Value *size;
     for (auto& arg : callinst.args()) {
-      args.push_back(arg.get());
+      size = arg.get();
     }
-    args.push_back(file);
-    args.push_back(ConstantInt::get(int64ty, line));
-    builder.CreateCall(create_func, args);
+
+    buildLabelCall(callinst, size);
   }
 }
 
@@ -98,8 +105,10 @@ void GraphPass::visitAllocaInst(AllocaInst &allInst) {
   const bool is = allInst.isArrayAllocation();
   Type *type = allInst.getAllocatedType();
   outs() << *type << "\n";
-  if (isa<ArrayType>(type))
+  if (isa<ArrayType>(type)) {
     std::cout << "foooooooo\n";
+
+  }
 }
 
 void GraphPass::visitLoadInst(LoadInst &loadInst) {
