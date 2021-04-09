@@ -56,7 +56,7 @@ PreservedAnalyses GraphPass::run(Module &M, ModuleAnalysisManager &MAM) {
   return PreservedAnalyses::none();
 };
 
-std::pair<unsigned, Value*> getMetaData(IRBuilder<> builder, DILocation *loc) {
+std::pair<unsigned, Value*> getMetaData(IRBuilder<> &builder, DILocation *loc) {
   unsigned line;
   Value *file;
   if (loc) {
