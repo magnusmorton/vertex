@@ -95,6 +95,11 @@ void GraphPass::visitCallInst(CallInst &callinst) {
 
 void GraphPass::visitAllocaInst(AllocaInst &allInst) {
   outs() << allInst << "\n";
+  const bool is = allInst.isArrayAllocation();
+  Type *type = allInst.getAllocatedType();
+  outs() << *type << "\n";
+  if (isa<ArrayType>(type))
+    std::cout << "foooooooo\n";
 }
 
 void GraphPass::visitLoadInst(LoadInst &loadInst) {
