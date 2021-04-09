@@ -69,11 +69,11 @@ std::pair<unsigned, Value*> getMetaData(IRBuilder<> &builder, DILocation *loc) {
   return std::make_pair(line, file);
 }
 
-void buildLabelCall(Instruction &inst, Value* size) {
+void buildLabelCall(Instruction &inst, Value* size, std::string label) {
   DILocation *loc = inst.getDebugLoc();
   IRBuilder<> builder(inst.getNextNode());
   std::vector<Value*> args;
-  Value *strptr = builder.CreateGlobalStringPtr("labbbellll");
+  Value *strptr = builder.CreateGlobalStringPtr(label);
   auto[line, file] = getMetaData(builder, loc);
   
   args.push_back(strptr);
@@ -96,7 +96,7 @@ void GraphPass::visitCallInst(CallInst &callinst) {
       size = arg.get();
     }
 
-    buildLabelCall(callinst, size);
+    buildLabelCall(callinst, size, "heap");
   }
 }
 
@@ -105,9 +105,9 @@ void GraphPass::visitAllocaInst(AllocaInst &allInst) {
   const bool is = allInst.isArrayAllocation();
   Type *type = allInst.getAllocatedType();
   outs() << *type << "\n";
-  if (isa<ArrayType>(type)) {
+  if (ArrayType *atype = dyn_cast<ArrayType>(type)) {
     std::cout << "foooooooo\n";
-
+    buildLabelCall(allInst, ConstantInt::get(int64ty, atype->getNumElements()), "stack");
   }
 }
 
