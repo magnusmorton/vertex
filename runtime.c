@@ -67,7 +67,7 @@ void _create_label(const char* label, void *ptr, size_t size, const char* file, 
   
   dfsan_label lab = dfsan_create_label(label, 0);
   dfsan_set_label(lab, ptr, size);
-  printf("ROOT at ptr %p, label %s, file %s:%d\n", ptr, label, file, line);
+  printf("ROOT at ptr %p, extent %lu, label %s, file %s:%d\n", ptr, size, label, file, line);
   int rc = array_push(&roots, &lab);
   struct memory_node nd = {.addr = ptr, .extent = size};
   array_push(&root_nodes, &nd);
@@ -78,20 +78,22 @@ void _check_ptr(void *ptr, const char *file, unsigned line) {
   dfsan_label check = dfsan_read_label(ptr, sizeof(ptr));
 
   if (!check) {
-    printf("label not found\n");
     return;
   }
   
+  unsigned count = 0;
   for (unsigned long i = 0; i < roots.length; i++) {
     dfsan_label lab = *(dfsan_label*)array_get(&roots, i);
     if (dfsan_has_label(check, lab)) {
-//      add_edge();
 
       struct memory_node *nd = (struct memory_node*)array_get(&root_nodes, i);
       printf("ptr %p (%s:%d) belongs to root %p lab %d\n", ptr, file, line, nd->addr, lab);
-      break;
+      count++;
     }
   }
+  printf("count: %d\n", count);
+  if (count > 1)
+    printf("\tprobable indirection\n"); 
 }
 
 void finish_san() {
