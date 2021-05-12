@@ -17,6 +17,7 @@ FunctionCallee create_func, check_func;
 
 Type* int64ty;
 Type* charstar;
+const DataLayout *dataLayout;
 
 PreservedAnalyses GraphPass::run(Function &F, FunctionAnalysisManager &M) {
   IRBuilder<> builder(F.getContext());
@@ -25,7 +26,7 @@ PreservedAnalyses GraphPass::run(Function &F, FunctionAnalysisManager &M) {
 };
 
 PreservedAnalyses GraphPass::run(Module &M, ModuleAnalysisManager &MAM) {
-
+  dataLayout = &M.getDataLayout();
   LLVMContext &ctx = M.getContext();
   int64ty = Type::getInt64Ty(ctx);
   charstar = Type::getInt8PtrTy(ctx);
