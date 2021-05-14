@@ -108,7 +108,10 @@ void GraphPass::visitAllocaInst(AllocaInst &allInst) {
   outs() << *type << "\n";
   if (ArrayType *atype = dyn_cast<ArrayType>(type)) {
     std::cout << "foooooooo\n";
-    buildLabelCall(allInst, ConstantInt::get(int64ty, atype->getNumElements()), "stack");
+    Optional<uint64_t> alloc_size = allInst.getAllocationSizeInBits(*dataLayout);
+    assert(alloc_size.hasValue());
+    std::cout << "size: " << alloc_size.getValue() / 8 << std::endl;
+    buildLabelCall(allInst, ConstantInt::get(int64ty, alloc_size.getValue() / 8), "stack");
   }
 }
 
