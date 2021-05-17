@@ -103,16 +103,13 @@ void GraphPass::visitCallInst(CallInst &callinst) {
 
 void GraphPass::visitAllocaInst(AllocaInst &allInst) {
   outs() << allInst << "\n";
-  const bool is = allInst.isArrayAllocation();
-  Type *type = allInst.getAllocatedType();
-  outs() << *type << "\n";
-  if (ArrayType *atype = dyn_cast<ArrayType>(type)) {
-    std::cout << "foooooooo\n";
-    Optional<uint64_t> alloc_size = allInst.getAllocationSizeInBits(*dataLayout);
-    assert(alloc_size.hasValue());
-    std::cout << "size: " << alloc_size.getValue() / 8 << std::endl;
-    buildLabelCall(allInst, ConstantInt::get(int64ty, alloc_size.getValue() / 8), "stack");
-  }
+
+  // log everything for now, but maybe should restrict to allocs > 4 (8?) bytes
+  Optional<uint64_t> alloc_size = allInst.getAllocationSizeInBits(*dataLayout);
+  assert(alloc_size.hasValue());
+  std::cout << "size: " << alloc_size.getValue() / 8 << std::endl;
+  buildLabelCall(allInst, ConstantInt::get(int64ty, alloc_size.getValue() / 8), "stack");
+  
 }
 
 void GraphPass::visitLoadInst(LoadInst &loadInst) {
