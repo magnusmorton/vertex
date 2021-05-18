@@ -59,6 +59,7 @@ PreservedAnalyses GraphPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
   // are we debug?
   debug = M.getNamedMetadata("llvm.dbg.cu") != NULL;
+  
   visit(M);
   return PreservedAnalyses::none();
 };
@@ -119,16 +120,13 @@ void handleAlloca(AllocaInst &allInst, DILocation *loc) {
 
 void GraphPass::visitAllocaInst(AllocaInst &allInst) {
   if (!debug) {
-    outs() << "No debug\n";
     handleAlloca(allInst, allInst.getDebugLoc());
   }
   
 }
 
 void GraphPass::visitDbgDeclareInst(DbgDeclareInst &dbgInst) {
-  outs() << "DEBUG\n";
   if ( AllocaInst *AI = dyn_cast<AllocaInst>(dbgInst.getAddress())) {
-    outs() << "ALLOCA DEBUG\n";
     handleAlloca(*AI, dbgInst.getDebugLoc());
   }
 }
