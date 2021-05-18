@@ -76,8 +76,7 @@ std::pair<unsigned, Value*> getMetaData(IRBuilder<> &builder, DILocation *loc) {
   return std::make_pair(line, file);
 }
 
-void buildLabelCall(Instruction &inst, Value* size, std::string label) {
-  DILocation *loc = inst.getDebugLoc();
+void buildLabelCall(Instruction &inst, Value* size, std::string label, DILocation *loc) {
   IRBuilder<> builder(inst.getNextNode());
   std::vector<Value*> args;
   Value *strptr = builder.CreateGlobalStringPtr(label);
@@ -102,24 +101,26 @@ void GraphPass::visitCallInst(CallInst &callinst) {
     for (auto& arg : callinst.args()) {
       size = arg.get();
     }
-
-    buildLabelCall(callinst, size, "heap");
+    buildLabelCall(callinst, size, "heap", callinst.getDebugLoc());
   }
 }
 
-void handleAlloca(AllocaInst &allInst) {
-  // log everything for now, but maybe should restrict to allocs > 4 (8?) bytes
+void handleAlloca(AllocaInst &allInst, DILocation *loc) {
   Optional<uint64_t> alloc_size = allInst.getAllocationSizeInBits(*dataLayout);
   assert(alloc_size.hasValue());
-  std::cout << "size: " << alloc_size.getValue() / 8 << std::endl;
-  ais.insert(&allInst);
-  buildLabelCall(allInst, ConstantInt::get(int64ty, alloc_size.getValue() / 8), "stack");
+  size_t size = alloc_size.getValue() / 8;
+
+  // don't care about anything smaller
+  if (size > 8) {
+    ais.insert(&allInst);
+    buildLabelCall(allInst, ConstantInt::get(int64ty, alloc_size.getValue() / 8), "stack", loc);
+  }
 }
 
 void GraphPass::visitAllocaInst(AllocaInst &allInst) {
   if (!debug) {
     outs() << "No debug\n";
-    handleAlloca(allInst);
+    handleAlloca(allInst, allInst.getDebugLoc());
   }
   
 }
@@ -128,7 +129,7 @@ void GraphPass::visitDbgDeclareInst(DbgDeclareInst &dbgInst) {
   outs() << "DEBUG\n";
   if ( AllocaInst *AI = dyn_cast<AllocaInst>(dbgInst.getAddress())) {
     outs() << "ALLOCA DEBUG\n";
-    handleAlloca(*AI);
+    handleAlloca(*AI, dbgInst.getDebugLoc());
   }
 }
 
