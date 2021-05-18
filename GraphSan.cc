@@ -15,9 +15,13 @@ using namespace llvm;
 
 FunctionCallee create_func, check_func;
 
+bool debug;
+
 Type* int64ty;
 Type* charstar;
 const DataLayout *dataLayout;
+
+std::set<AllocaInst*> ais;
 
 PreservedAnalyses GraphPass::run(Function &F, FunctionAnalysisManager &M) {
   IRBuilder<> builder(F.getContext());
@@ -52,7 +56,9 @@ PreservedAnalyses GraphPass::run(Module &M, ModuleAnalysisManager &MAM) {
     charstar,
     int64ty
     );
-  
+
+  // are we debug?
+  debug = M.getNamedMetadata("llvm.dbg.cu") != NULL;
   visit(M);
   return PreservedAnalyses::none();
 };
@@ -101,15 +107,29 @@ void GraphPass::visitCallInst(CallInst &callinst) {
   }
 }
 
-void GraphPass::visitAllocaInst(AllocaInst &allInst) {
-  outs() << allInst << "\n";
-
+void handleAlloca(AllocaInst &allInst) {
   // log everything for now, but maybe should restrict to allocs > 4 (8?) bytes
   Optional<uint64_t> alloc_size = allInst.getAllocationSizeInBits(*dataLayout);
   assert(alloc_size.hasValue());
   std::cout << "size: " << alloc_size.getValue() / 8 << std::endl;
+  ais.insert(&allInst);
   buildLabelCall(allInst, ConstantInt::get(int64ty, alloc_size.getValue() / 8), "stack");
+}
+
+void GraphPass::visitAllocaInst(AllocaInst &allInst) {
+  if (!debug) {
+    outs() << "No debug\n";
+    handleAlloca(allInst);
+  }
   
+}
+
+void GraphPass::visitDbgDeclareInst(DbgDeclareInst &dbgInst) {
+  outs() << "DEBUG\n";
+  if ( AllocaInst *AI = dyn_cast<AllocaInst>(dbgInst.getAddress())) {
+    outs() << "ALLOCA DEBUG\n";
+    handleAlloca(*AI);
+  }
 }
 
 void GraphPass::visitLoadInst(LoadInst &loadInst) {

@@ -14,6 +14,7 @@ public:
 
   void visitCallInst(CallInst &callinst);
   void visitAllocaInst(AllocaInst &allInst);
+  void visitDbgDeclareInst(DbgDeclareInst &dinst);
   void visitLoadInst(LoadInst &loadInst);
   void visitStoreInst(StoreInst &storeInst);
   void visitAtomicRMWInst(AtomicRMWInst &inst);
