@@ -21,8 +21,6 @@ Type* int64ty;
 Type* charstar;
 const DataLayout *dataLayout;
 
-std::set<AllocaInst*> ais;
-
 PreservedAnalyses GraphPass::run(Function &F, FunctionAnalysisManager &M) {
   IRBuilder<> builder(F.getContext());
   visit(F);
@@ -113,7 +111,6 @@ void handleAlloca(AllocaInst &allInst, DILocation *loc) {
 
   // don't care about anything smaller
   if (size > 8) {
-    ais.insert(&allInst);
     buildLabelCall(allInst, ConstantInt::get(int64ty, alloc_size.getValue() / 8), "stack", loc);
   }
 }
