@@ -11,7 +11,7 @@ make
 
 ## Using library and runtime
 ```shell
-clang -O1 -g -fsanitize=dataflow -fexperimental-new-pass-manager -fpass-plugin=build/libGraphSan.so -L./build/ -lruntime test_dfauto.c 
+clang -O1 -g -fexperimental-new-pass-manager -fpass-plugin=build/libMemPass.so -L./build/ -lruntime test_dfauto.c 
 ```
 
 We need to use at least -O1. If you can figure out a way of using no
