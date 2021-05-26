@@ -32,13 +32,9 @@ PreservedAnalyses GraphPass::run(Module &M, ModuleAnalysisManager &MAM) {
   LLVMContext &ctx = M.getContext();
   int64ty = Type::getInt64Ty(ctx);
   charstar = Type::getInt8PtrTy(ctx);
-  /*
-    dfsan mangles function symbols on instrumented CUs. Our pass is run after
-    this happens. I can't find a way of running it before with the new pass
-    manager, so I do it here. 
-  */
+ 
   create_func = M.getOrInsertFunction(
-    "dfs$_create_label",
+    "_create_label",
     Type::getVoidTy(ctx),
     Type::getInt8PtrTy(ctx),
     Type::getInt8PtrTy(ctx),
@@ -48,7 +44,7 @@ PreservedAnalyses GraphPass::run(Module &M, ModuleAnalysisManager &MAM) {
     );
   
   check_func = M.getOrInsertFunction(
-    "dfs$_check_ptr",
+    "_check_ptr",
     Type::getVoidTy(ctx),
     Type::getInt8PtrTy(ctx),
     charstar,

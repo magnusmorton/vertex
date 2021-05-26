@@ -1,6 +1,5 @@
 #include <assert.h>
 #include <limits.h>
-#include <sanitizer/dfsan_interface.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -53,8 +52,8 @@ int numPlaces (int n) {
 int init_san() {
   printf("initing runtime....\n");
   init_array(&root_nodes, ROOT_CHUNK, sizeof(struct memory_node));
-  init_array(&roots, ROOT_CHUNK, sizeof(dfsan_label));
 
+  // TODO: use a hash table. or test perf
   inited = 1;
   // realisitically, any errors are going to be unrecoverable here
   return 0;
@@ -65,29 +64,20 @@ void _create_label(const char* label, void *ptr, size_t size, const char* file, 
   if (!inited)
     init_san();
   
-  dfsan_label lab = dfsan_create_label(label, 0);
-  dfsan_set_label(lab, ptr, size);
   printf("ROOT at ptr %p, extent %lu, label %s, file %s:%d\n", ptr, size, label, file, line);
-  int rc = array_push(&roots, &lab);
   struct memory_node nd = {.addr = ptr, .extent = size};
   array_push(&root_nodes, &nd);
+  array_push(&roots, ptr);
   assert(root_nodes.length == roots.length);
 }
 
 void _check_ptr(void *ptr, const char *file, unsigned line) {
-  dfsan_label check = dfsan_read_label(ptr, sizeof(ptr));
-
-  if (!check) {
-    return;
-  }
-  
   unsigned count = 0;
-  for (unsigned long i = 0; i < roots.length; i++) {
-    dfsan_label lab = *(dfsan_label*)array_get(&roots, i);
-    if (dfsan_has_label(check, lab)) {
+  for (unsigned long i = 0; i < root_nodes.length; i++) {
+    struct memory_node *nd = array_get(&root_nodes, i);
+    if (ptr >= nd->addr && ptr < nd->addr + nd->extent) {
 
-      struct memory_node *nd = (struct memory_node*)array_get(&root_nodes, i);
-      printf("ptr %p (%s:%d) belongs to root %p lab %d\n", ptr, file, line, nd->addr, lab);
+      printf("ptr %p (%s:%d) belongs to root %p\n", ptr, file, line, nd->addr);
       count++;
     }
   }
@@ -97,6 +87,5 @@ void _check_ptr(void *ptr, const char *file, unsigned line) {
 }
 
 void finish_san() {
-  free_array(&roots);
   free_array(&root_nodes);
 }

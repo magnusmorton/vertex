@@ -22,7 +22,7 @@ add_library(runtime SHARED
   )
 
 set_target_properties(runtime PROPERTIES
-    COMPILE_FLAGS "-fsanitize=dataflow -g -std=c11"
+    COMPILE_FLAGS "-g -std=c11"
 )
 
 target_compile_features(GraphSan PRIVATE cxx_range_for cxx_auto_type)
