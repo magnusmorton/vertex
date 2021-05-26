@@ -21,20 +21,20 @@ Type* int64ty;
 Type* charstar;
 const DataLayout *dataLayout;
 
-PreservedAnalyses GraphPass::run(Function &F, FunctionAnalysisManager &M) {
+PreservedAnalyses MemPass::run(Function &F, FunctionAnalysisManager &M) {
   IRBuilder<> builder(F.getContext());
   visit(F);
   return PreservedAnalyses::all();
 };
 
-PreservedAnalyses GraphPass::run(Module &M, ModuleAnalysisManager &MAM) {
+PreservedAnalyses MemPass::run(Module &M, ModuleAnalysisManager &MAM) {
   dataLayout = &M.getDataLayout();
   LLVMContext &ctx = M.getContext();
   int64ty = Type::getInt64Ty(ctx);
   charstar = Type::getInt8PtrTy(ctx);
  
   create_func = M.getOrInsertFunction(
-    "_create_label",
+    "_mark_root",
     Type::getVoidTy(ctx),
     Type::getInt8PtrTy(ctx),
     Type::getInt8PtrTy(ctx),
@@ -85,7 +85,7 @@ void buildLabelCall(Instruction &inst, Value* size, std::string label, DILocatio
   builder.CreateCall(create_func, args);
 }
 
-void GraphPass::visitCallInst(CallInst &callinst) {
+void MemPass::visitCallInst(CallInst &callinst) {
   Function *func = callinst.getCalledFunction();
   StringRef name = "none";
   if (func)
@@ -111,20 +111,20 @@ void handleAlloca(AllocaInst &allInst, DILocation *loc) {
   }
 }
 
-void GraphPass::visitAllocaInst(AllocaInst &allInst) {
+void MemPass::visitAllocaInst(AllocaInst &allInst) {
   if (!debug) {
     handleAlloca(allInst, allInst.getDebugLoc());
   }
   
 }
 
-void GraphPass::visitDbgDeclareInst(DbgDeclareInst &dbgInst) {
+void MemPass::visitDbgDeclareInst(DbgDeclareInst &dbgInst) {
   if ( AllocaInst *AI = dyn_cast<AllocaInst>(dbgInst.getAddress())) {
     handleAlloca(*AI, dbgInst.getDebugLoc());
   }
 }
 
-void GraphPass::visitLoadInst(LoadInst &loadInst) {
+void MemPass::visitLoadInst(LoadInst &loadInst) {
   DILocation *loc = loadInst.getDebugLoc();
   IRBuilder<> builder(loadInst.getNextNode());
   auto[line, file] = getMetaData(builder, loc);
@@ -132,29 +132,29 @@ void GraphPass::visitLoadInst(LoadInst &loadInst) {
   builder.CreateCall(check_func, args);
 }
 
-void GraphPass::visitStoreInst(StoreInst &storeInst) {
+void MemPass::visitStoreInst(StoreInst &storeInst) {
   // TODO: implement
 }
 
-void GraphPass::visitAtomicRMWInst(AtomicRMWInst &inst) {
+void MemPass::visitAtomicRMWInst(AtomicRMWInst &inst) {
   // bet this never gets called
   assert(false);
 }
 
-void GraphPass::visitAtomicCmpXchgInst(AtomicCmpXchgInst &inst) {
+void MemPass::visitAtomicCmpXchgInst(AtomicCmpXchgInst &inst) {
   // bet this never gets called
   assert(false);
 
 }
 
-void GraphPass::visitMemIntrinsic(MemIntrinsic &intr) {
+void MemPass::visitMemIntrinsic(MemIntrinsic &intr) {
   //not sure what todo here
 }
 
 extern "C" ::llvm::PassPluginLibraryInfo LLVM_ATTRIBUTE_WEAK
 llvmGetPassPluginInfo() {
-  return {LLVM_PLUGIN_API_VERSION, "GraphPass", "v0.1", [](PassBuilder &PB) {
+  return {LLVM_PLUGIN_API_VERSION, "MemPass", "v0.1", [](PassBuilder &PB) {
             PB.registerPipelineStartEPCallback(
-                [](llvm::ModulePassManager &PM) { PM.addPass(GraphPass()); });
+                [](llvm::ModulePassManager &PM) { PM.addPass(MemPass()); });
           }};
 }

@@ -6,8 +6,8 @@
 #include "llvm/Pass.h"
 
 namespace llvm {
-class GraphPass : public PassInfoMixin<GraphPass>,
-                  public InstVisitor<GraphPass> {
+class MemPass : public PassInfoMixin<MemPass>,
+                  public InstVisitor<MemPass> {
 public:
   PreservedAnalyses run(Function &F, FunctionAnalysisManager &AM);
   PreservedAnalyses run(Module &M, ModuleAnalysisManager &AM);

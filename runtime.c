@@ -60,7 +60,7 @@ int init_san() {
 
 }
 
-void _create_label(const char* label, void *ptr, size_t size, const char* file, unsigned line) {
+void _mark_root(const char* label, void *ptr, size_t size, const char* file, unsigned line) {
   if (!inited)
     init_san();
   
