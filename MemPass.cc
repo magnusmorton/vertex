@@ -9,7 +9,7 @@
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 
-#include "GraphSan.h"
+#include "MemPass.h"
 
 using namespace llvm;
 

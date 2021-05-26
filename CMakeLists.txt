@@ -12,8 +12,8 @@ add_definitions(${LLVM_DEFINITIONS})
 include_directories(${LLVM_INCLUDE_DIRS})
 link_directories(${LLVM_LIBRARY_DIRS})
 
-add_library(GraphSan MODULE
-	GraphSan.cc
+add_library(MemPass MODULE
+	MemPass.cc
 )
 
 add_library(runtime SHARED
@@ -25,4 +25,4 @@ set_target_properties(runtime PROPERTIES
     COMPILE_FLAGS "-g -std=c11"
 )
 
-target_compile_features(GraphSan PRIVATE cxx_range_for cxx_auto_type)
+target_compile_features(MemPass PRIVATE cxx_range_for cxx_auto_type)
