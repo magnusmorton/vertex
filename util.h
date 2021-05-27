@@ -40,7 +40,7 @@ void free_array(mag_array*);
 
 mag_array make_adj_list();
 
-int add_adge(mag_array *adj_list, int source, int sink);
+int add_edge(mag_array *adj_list, int source, int sink);
 
 
 #endif
