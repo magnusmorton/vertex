@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-
+#include "runtime.h"
 #include "util.h"
 
 #define ROOT_CHUNK 512
@@ -47,11 +47,7 @@ struct edge {
   struct memory_node *b;
 };
 
-static struct edge *edgelist;
-static size_t edge_count = 0;
-static size_t edgelist_size = 0;
-
-
+mag_array adj_list;
 
 int numPlaces (int n) {
   if (n < 0) n = (n == INT_MIN) ? INT_MAX : -n;
@@ -70,9 +66,10 @@ int numPlaces (int n) {
 int init_san() {
   printf("initing runtime....\n");
   init_array(&root_nodes, ROOT_CHUNK, sizeof(struct memory_node));
-
+  adj_list = make_adj_list();
   // TODO: use a hash table. or test perf
   inited = 1;
+  atexit(&finish_san);
   // realisitically, any errors are going to be unrecoverable here
   return 0;
 
@@ -85,8 +82,7 @@ void _mark_root(const char* label, void *ptr, size_t size, const char* file, uns
   printf("ROOT at ptr %p, extent %lu, label %s, file %s:%d\n", ptr, size, label, file, line);
   struct memory_node nd = {.addr = ptr, .extent = size};
   array_push(&root_nodes, &nd);
-  array_push(&roots, ptr);
-  assert(root_nodes.length == roots.length);
+
 }
 
 void _check_ptr(void *ptr, const char *file, unsigned line) {
@@ -106,4 +102,5 @@ void _check_ptr(void *ptr, const char *file, unsigned line) {
 
 void finish_san() {
   free_array(&root_nodes);
+  destroy_adj_list(&adj_list);
 }
