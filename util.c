@@ -31,7 +31,7 @@ struct array make_adj_list() {
 }
 
 void destroy_adj_list(struct array *list) {
-  for (int i = 0; i < list->length; i++) {
+  for (unsigned i = 0; i < list->length; i++) {
     struct list_elem *el = array_get(list, i);
     while (el) {
       struct list_elem *next = el->forward;
