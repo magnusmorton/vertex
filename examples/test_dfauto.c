@@ -9,4 +9,5 @@ int main() {
   int bar = arr[127];
   int arr2[97];
   arr2[45] = 39;
+  free(arr);
 }
