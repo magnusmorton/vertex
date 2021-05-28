@@ -39,7 +39,7 @@ void destroy_adj_list(struct array *list) {
       el = next;
     }
   }
-  free(list);
+  free_array(list);
 }
 
 int add_edge(struct array *adj_list, int source, int sink) {
