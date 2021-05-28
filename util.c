@@ -30,6 +30,18 @@ struct array make_adj_list() {
   return adj_list;
 }
 
+void destroy_adj_list(struct array *list) {
+  for (int i = 0; i < list->length; i++) {
+    struct list_elem *el = array_get(list, i);
+    while (el) {
+      struct list_elem *next = el->forward;
+      free(el);
+      el = next;
+    }
+  }
+  free(list);
+}
+
 int add_edge(struct array *adj_list, int source, int sink) {
   int rc = 0;
   // find source;

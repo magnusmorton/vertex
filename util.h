@@ -42,5 +42,6 @@ mag_array make_adj_list();
 
 int add_edge(mag_array *adj_list, int source, int sink);
 
+void destroy_adj_list(mag_array *adj_list);
 
 #endif
