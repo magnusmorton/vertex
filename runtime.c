@@ -100,6 +100,10 @@ void _check_ptr(void *ptr, const char *file, unsigned line) {
     printf("\tprobable indirection\n"); 
 }
 
+void _handle_store(void *target, void *source) {
+  
+}
+
 void finish_san() {
   free_array(&root_nodes);
   destroy_adj_list(&adj_list);

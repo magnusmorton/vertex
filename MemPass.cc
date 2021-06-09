@@ -134,6 +134,7 @@ void MemPass::visitLoadInst(LoadInst &loadInst) {
 
 void MemPass::visitStoreInst(StoreInst &storeInst) {
   // TODO: implement
+  
 }
 
 void MemPass::visitAtomicRMWInst(AtomicRMWInst &inst) {
