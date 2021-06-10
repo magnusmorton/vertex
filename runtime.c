@@ -67,12 +67,20 @@ int init_san() {
   printf("initing runtime....\n");
   init_array(&root_nodes, ROOT_CHUNK, sizeof(struct memory_node));
   adj_list = make_adj_list();
-  // TODO: use a hash table. or test perf
   inited = 1;
   atexit(&finish_san);
   // realisitically, any errors are going to be unrecoverable here
   return 0;
 
+}
+
+long search_roots(void *addr) {
+  for (size_t i = 0; i < root_nodes.length; i++) {
+    struct memory_node *mem = array_get(&root_nodes, i);
+    if (addr >= mem->addr && addr < mem->addr + mem->extent )
+      return i;
+  }
+  return -1;
 }
 
 void _mark_root(const char* label, void *ptr, size_t size, const char* file, unsigned line) {
@@ -101,7 +109,9 @@ void _check_ptr(void *ptr, const char *file, unsigned line) {
 }
 
 void _handle_store(void *target, void *source) {
-  
+  long ti = search_roots(target);
+  long si = search_roots(source);
+  add_edge(&adj_list, si, ti);
 }
 
 void finish_san() {
