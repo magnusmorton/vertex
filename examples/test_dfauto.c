@@ -5,9 +5,7 @@
 
 int main() {
   int *arr = malloc(sizeof(int) * 128);
-  int foo = 34;
-  int bar = arr[127];
   int arr2[97];
-  arr2[45] = 39;
+  arr2[45] = arr + 3;
   free(arr);
 }
