@@ -13,13 +13,11 @@ int main(void) {
   dfsan_add_label(a_label, &a, sizeof(a));
   dfsan_label b_label = dfsan_create_label("b", 0);
   dfsan_add_label(b_label, &b, sizeof(b));
-  printf("b label %hd\n", b_label);
-  dfsan_label check = dfsan_read_label(&b, sizeof(b));
-  printf("check label %hd\n", check);
-  assert(dfsan_has_label(check,b_label));
+
   *b = a;
-  check = dfsan_read_label(&b, sizeof(int));
-  printf("check label %hd\n", check);
+
+  dfsan_label check = dfsan_read_label(&b, sizeof(int));
+
   assert(dfsan_has_label(check,b_label));
 
   check = dfsan_read_label(b, sizeof(int));
