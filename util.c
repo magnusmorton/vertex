@@ -1,6 +1,8 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 
 #include "util.h"
 
@@ -26,7 +28,10 @@ int init_array(struct array *arr, size_t capacity, size_t element_size) {
 
 struct array make_adj_list() {
   struct array adj_list;
-  init_array(&adj_list, 512, sizeof(struct list_elem *));
+  int rc = init_array(&adj_list, 512, sizeof(struct list_elem *));
+  assert(rc == 0);
+  memset(adj_list.data, 0, 512 * sizeof(struct list_elem *));
+
   return adj_list;
 }
 
