@@ -13,7 +13,7 @@
 
 using namespace llvm;
 
-FunctionCallee create_func, check_func;
+FunctionCallee create_func, check_func, store_func;
 
 bool debug;
 
@@ -50,6 +50,14 @@ PreservedAnalyses MemPass::run(Module &M, ModuleAnalysisManager &MAM) {
     charstar,
     int64ty
     );
+
+  store_func = M.getOrInsertFunction(
+    "_handle_store",
+    Type::getVoidTy(ctx),
+    Type::getInt8PtrTy(ctx),
+    Type::getInt8PtrTy(ctx)
+    );
+  
 
   // are we debug?
   debug = M.getNamedMetadata("llvm.dbg.cu") != NULL;
@@ -134,7 +142,11 @@ void MemPass::visitLoadInst(LoadInst &loadInst) {
 
 void MemPass::visitStoreInst(StoreInst &storeInst) {
   // TODO: implement
-  
+  Value *ptr = storeInst.getPointerOperand();
+  Value *source = storeInst.getValueOperand();
+  IRBuilder<> builder(storeInst.getNextNode());
+  std::vector<Value*> args = {ptr, source};
+  builder.CreateCall(store_func, args);
 }
 
 void MemPass::visitAtomicRMWInst(AtomicRMWInst &inst) {
