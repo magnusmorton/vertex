@@ -42,7 +42,7 @@ void destroy_adj_list(struct array *list) {
   free_array(list);
 }
 
-int add_edge(struct array *adj_list, int source, int sink) {
+int add_edge(struct array *adj_list, long source, long sink) {
   int rc = 0;
   // find source;
   struct list_elem *list = array_get(adj_list, source);
