@@ -109,6 +109,7 @@ void _check_ptr(void *ptr, const char *file, unsigned line) {
 }
 
 void _handle_store(void *target, void *source) {
+  printf("handling store.....\n");
   long ti = search_roots(target);
   long si = search_roots(source);
   add_edge(&adj_list, si, ti);
