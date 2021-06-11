@@ -6,11 +6,16 @@ set(CMAKE_CXX_STANDARD 17)
 
 configure_file(VertexConfig.h.in VertexConfig.h)
 
-
+find_package(PkgConfig REQUIRED)
+PKG_CHECK_MODULES(IGRAPH REQUIRED)
 find_package(LLVM REQUIRED CONFIG)
+
 add_definitions(${LLVM_DEFINITIONS})
 include_directories(${LLVM_INCLUDE_DIRS})
+include_directories(${IGRAPH_INCLUDE_DIRS})
 link_directories(${LLVM_LIBRARY_DIRS})
+link_directories(${IGRAPH_LIBRARY_DIRS})
+
 
 add_library(MemPass MODULE
 	MemPass.cc
