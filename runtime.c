@@ -96,6 +96,7 @@ void _mark_root(const char* label, void *ptr, size_t size, const char* file, uns
   printf("ROOT at ptr %p, extent %lu, label %s, file %s:%d\n", ptr, size, label, file, line);
   struct memory_node nd = {.addr = ptr, .extent = size};
   array_push(&root_nodes, &nd);
+  igraph_add_vertices(&mem_graph, 1, 0);
 
 }
 
@@ -118,7 +119,8 @@ void _handle_store(void *target, void *source) {
   printf("handling store.....\n");
   long ti = search_roots(target);
   long si = search_roots(source);
-  add_edge(&adj_list, si, ti);
+  printf("source %ld, sink %ld\n", si, ti);
+  igraph_add_edge(&mem_graph, si, ti);
 }
 
 void finish_san() {
