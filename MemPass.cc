@@ -28,6 +28,7 @@ PreservedAnalyses MemPass::run(Function &F, FunctionAnalysisManager &M) {
 };
 
 PreservedAnalyses MemPass::run(Module &M, ModuleAnalysisManager &MAM) {
+  std::cout << "mempass running.....\n";
   dataLayout = &M.getDataLayout();
   LLVMContext &ctx = M.getContext();
   int64ty = Type::getInt64Ty(ctx);
@@ -120,13 +121,13 @@ void handleAlloca(AllocaInst &allInst, DILocation *loc) {
 }
 
 void MemPass::visitAllocaInst(AllocaInst &allInst) {
-  if (!debug) {
-    handleAlloca(allInst, allInst.getDebugLoc());
-  }
-  
+  outs() << "visiting ALLOCA....\n";
+  handleAlloca(allInst, allInst.getDebugLoc());
+    
 }
 
 void MemPass::visitDbgDeclareInst(DbgDeclareInst &dbgInst) {
+  outs() << "visiting DBG DECLARE....\n";
   if ( AllocaInst *AI = dyn_cast<AllocaInst>(dbgInst.getAddress())) {
     handleAlloca(*AI, dbgInst.getDebugLoc());
   }
