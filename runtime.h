@@ -1,6 +1,15 @@
 #include <stdlib.h>
+#ifdef __cplusplus
+extern "C"
+#endif
+void _mark_root(const char *, char*, size_t, const char*, unsigned);
 
-int init_san();
-void finish_san();
-void _mark_root(const char *, void *, size_t, const char*, unsigned);
-void _check_ptr(void *, const char*, unsigned);
+#ifdef __cplusplus
+extern "C"
+#endif
+void _check_ptr(char *, const char*, unsigned);
+
+#ifdef __cplusplus
+extern "C"
+#endif
+void _handle_store(char *target, char *source);

@@ -22,12 +22,11 @@ add_library(MemPass MODULE
 )
 
 add_library(runtime SHARED
-  runtime.c
-  util.c
+  runtime.cc
   )
 
 set_target_properties(runtime PROPERTIES
-    COMPILE_FLAGS "-g -std=c11"
+    COMPILE_FLAGS "-g"
 )
 
 target_compile_features(MemPass PRIVATE cxx_range_for cxx_auto_type)
