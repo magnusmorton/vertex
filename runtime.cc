@@ -58,7 +58,7 @@ extern "C" void _mark_root(const char* label, char *ptr, size_t size, const char
     atexit(&finish);
     inited = true;
   }
-  printf("ROOT at ptr %p, extent %lu, label %s, file %s:%d\n", ptr, size, label, file, line);
+  printf("ROOT at ptr %p, extent %lu, label %s, file %s:%d, id: %ld\n", ptr, size, label, file, line, roots.size());
   struct memory_node nd = {ptr, ptr + size};
   roots.push_back(nd);
   vds.push_back(add_vertex(memGraph));
