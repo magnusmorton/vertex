@@ -94,7 +94,7 @@ extern "C" void _handle_store(char *target, char *source) {
     if (prev_edge_it != prev_stores.end()) {
       std::cerr << "previous store\n";
       auto prev_edge = prev_edge_it->second;
-      // probably unecessary
+      // >0 probably unecessary
       if (edge_refs[prev_edge] > 0) {
         edge_refs[prev_edge]--;
         if (edge_refs[prev_edge] == 0)
