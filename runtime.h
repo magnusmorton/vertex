@@ -1,5 +1,12 @@
 #include <stdlib.h>
 
+enum Detected {
+  LL,
+  ARRAY,
+  TREE,
+  GRAPH
+};
+
 /* #ifdef __cplusplus */
 /* extern "C" */
 /* #endif */
@@ -18,3 +25,4 @@
 #ifdef __cplusplus
 extern "C"
 #endif
+enum Detected detectedDataStructures();
