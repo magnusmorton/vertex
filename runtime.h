@@ -4,7 +4,8 @@ enum Detected {
   LL,
   ARRAY,
   TREE,
-  GRAPH
+  GRAPH,
+  NONE
 };
 
 /* #ifdef __cplusplus */

@@ -24,6 +24,7 @@
 #include <boost/bimap.hpp>
 #include <boost/graph/graph_traits.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/connected_components.hpp>
 #include <boost/graph/graphviz.hpp>
 
 #include <limits.h>
@@ -53,6 +54,7 @@ std::map<char*, MemGraph::edge_descriptor> prev_stores;
 std::map<MemGraph::edge_descriptor, unsigned> edge_refs;
 
 void finish() {
+  detectedDataStructures();
   std::ofstream file;
   file.open("graph.dot");
   write_graphviz(file, memGraph);
@@ -116,4 +118,10 @@ extern "C" void _handle_store(char *target, char *source) {
   }
 }
 
+extern "C" enum Detected detectedDataStructures() {
+  std::vector<int> component(num_vertices(memGraph));
+  int num = connected_components(memGraph, &component[0]);
+  std::cout << "components: " << num << std::endl;
+  return Detected::NONE;
+}
 
