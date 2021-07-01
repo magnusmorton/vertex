@@ -21,6 +21,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <igraph/igraph.h>
+
 #include "runtime.h"
 #include "util.h"
 
@@ -49,6 +51,8 @@ struct edge {
 
 mag_array adj_list;
 
+igraph_t mem_graph;
+
 int numPlaces (int n) {
   if (n < 0) n = (n == INT_MIN) ? INT_MAX : -n;
   if (n < 10) return 1;
@@ -67,6 +71,8 @@ int init_san() {
   printf("initing runtime....\n");
   init_array(&root_nodes, ROOT_CHUNK, sizeof(struct memory_node));
   adj_list = make_adj_list();
+  igraph_empty(&mem_graph, 0, IGRAPH_DIRECTED);
+
   inited = 1;
   atexit(&finish_san);
   // realisitically, any errors are going to be unrecoverable here
@@ -118,4 +124,5 @@ void _handle_store(void *target, void *source) {
 void finish_san() {
   free_array(&root_nodes);
   destroy_adj_list(&adj_list);
+  igraph_destroy(&mem_graph);
 }
