@@ -11,6 +11,7 @@ configure_file(VertexConfig.h.in VertexConfig.h)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(IGRAPH REQUIRED IMPORTED_TARGET GLOBAL igraph)
+pkg_check_modules(GLIB REQUIRED IMPORTED_TARGET GLOBAL glib-2.0)
 find_package(LLVM REQUIRED CONFIG)
 
 add_definitions(${LLVM_DEFINITIONS})
@@ -31,7 +32,7 @@ add_library(runtime SHARED
   runtime.c
   util.c
   )
-target_link_libraries(runtime PkgConfig::IGRAPH)
+target_link_libraries(runtime PkgConfig::IGRAPH PkgConfig::GLIB)
 set_target_properties(runtime PROPERTIES
     COMPILE_FLAGS "-g"
 )

@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <gmodule.h>
 #include <igraph/igraph.h>
 
 #include "runtime.h"
