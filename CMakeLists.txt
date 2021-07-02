@@ -10,7 +10,7 @@ set(CMAKE_CXX_COMPILER "clang++")
 configure_file(VertexConfig.h.in VertexConfig.h)
 
 find_package(PkgConfig REQUIRED)
-PKG_CHECK_MODULES(IGRAPH REQUIRED)
+pkg_check_modules(IGRAPH REQUIRED IMPORTED_TARGET GLOBAL igraph)
 find_package(LLVM REQUIRED CONFIG)
 
 add_definitions(${LLVM_DEFINITIONS})
@@ -25,10 +25,13 @@ add_library(MemPass MODULE
 	MemPass.cc
 )
 
-add_library(runtime SHARED
-  runtime.cc
-  )
 
+
+add_library(runtime SHARED
+  runtime.c
+  util.c
+  )
+target_link_libraries(runtime PkgConfig::IGRAPH)
 set_target_properties(runtime PROPERTIES
     COMPILE_FLAGS "-g"
 )
@@ -38,7 +41,7 @@ target_compile_features(MemPass PRIVATE cxx_range_for cxx_auto_type)
 foreach ( sourcefile ${EXAMPLES} )
   get_filename_component(exname ${sourcefile} NAME_WLE)
   add_executable( ${exname} ${sourcefile} )
-  target_link_libraries( ${exname} runtime )
+  target_link_libraries( ${exname} runtime PkgConfig::IGRAPH )
   set_target_properties( ${exname} PROPERTIES
     COMPILE_FLAGS "-O1 -g -fexperimental-new-pass-manager  -fpass-plugin=./libMemPass.so")
   add_dependencies( ${exname} MemPass )
