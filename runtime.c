@@ -44,12 +44,6 @@ struct memory_node {
   
 };
 
-struct edge {
-  struct memory_node *a;
-  struct memory_node *b;
-};
-
-mag_array adj_list;
 
 igraph_t mem_graph;
 
@@ -67,10 +61,19 @@ int numPlaces (int n) {
   return 10;
 }
 
+void finish_san() {
+  free_array(&root_nodes);
+
+  FILE *f = fopen("graph.dot", "w");
+  igraph_write_graph_dot(&mem_graph, f);
+  fclose(f);
+  
+  igraph_destroy(&mem_graph);
+}
+
 int init_san() {
   printf("initing runtime....\n");
   init_array(&root_nodes, ROOT_CHUNK, sizeof(struct memory_node));
-  adj_list = make_adj_list();
   igraph_empty(&mem_graph, 0, IGRAPH_DIRECTED);
 
   inited = 1;
@@ -96,6 +99,7 @@ void _mark_root(const char* label, void *ptr, size_t size, const char* file, uns
   printf("ROOT at ptr %p, extent %lu, label %s, file %s:%d\n", ptr, size, label, file, line);
   struct memory_node nd = {.addr = ptr, .extent = size};
   array_push(&root_nodes, &nd);
+  igraph_add_vertices(&mem_graph, 1, NULL);
 
 }
 
@@ -116,13 +120,15 @@ void _check_ptr(void *ptr, const char *file, unsigned line) {
 
 void _handle_store(void *target, void *source) {
   printf("handling store.....\n");
+
   long ti = search_roots(target);
   long si = search_roots(source);
-  add_edge(&adj_list, si, ti);
+  printf("source: %ld; sink: %ld;\n", si, ti);
+
+  if (ti < 0 || si < 0) {
+    fprintf(stderr, "target or source not found\n");
+  } else { 
+    igraph_add_edge(&mem_graph, si, ti);
+  }
 }
 
-void finish_san() {
-  free_array(&root_nodes);
-  destroy_adj_list(&adj_list);
-  igraph_destroy(&mem_graph);
-}
