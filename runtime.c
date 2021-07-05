@@ -48,6 +48,8 @@ struct memory_node {
 
 igraph_t mem_graph;
 
+GHashTable *prev_stores;
+
 int numPlaces (int n) {
   if (n < 0) n = (n == INT_MIN) ? INT_MAX : -n;
   if (n < 10) return 1;
@@ -76,7 +78,7 @@ int init_san() {
   printf("initing runtime....\n");
   init_array(&root_nodes, ROOT_CHUNK, sizeof(struct memory_node));
   igraph_empty(&mem_graph, 0, IGRAPH_DIRECTED);
-
+  prev_stores = g_hash_table_new(NULL, NULL);
   inited = 1;
   atexit(&finish_san);
   // realisitically, any errors are going to be unrecoverable here
@@ -130,6 +132,15 @@ void _handle_store(void *target, void *source) {
     fprintf(stderr, "target or source not found\n");
   } else { 
     igraph_add_edge(&mem_graph, si, ti);
+    igraph_integer_t eid = igraph_ecount(&mem_graph) - 1;
+    gpointer prev;
+    if ((prev = g_hash_table_lookup(prev_stores, &target))) {
+      printf("previous store\n");
+    }
+    else {
+      printf("new store\n");
+      g_hash_table_insert(prev_stores, GINT_TO_POINTER(target), GINT_TO_POINTER(eid));
+    }
   }
 }
 
