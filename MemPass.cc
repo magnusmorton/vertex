@@ -121,13 +121,13 @@ void handleAlloca(AllocaInst &allInst, DILocation *loc) {
 }
 
 void MemPass::visitAllocaInst(AllocaInst &allInst) {
-  outs() << "visiting ALLOCA....\n";
+  errs() << "visiting ALLOCA....\n";
   handleAlloca(allInst, allInst.getDebugLoc());
     
 }
 
 void MemPass::visitDbgDeclareInst(DbgDeclareInst &dbgInst) {
-  outs() << "visiting DBG DECLARE....\n";
+  errs() << "visiting DBG DECLARE....\n";
   if ( AllocaInst *AI = dyn_cast<AllocaInst>(dbgInst.getAddress())) {
     handleAlloca(*AI, dbgInst.getDebugLoc());
   }
