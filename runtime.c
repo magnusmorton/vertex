@@ -135,11 +135,9 @@ void _handle_store(void *target, void *source) {
         igraph_delete_edges(&mem_graph, igraph_ess_1(prev_edge));
       }
     }
-    else {
-      g_hash_table_insert(prev_stores,  target, GINT_TO_POINTER(eid));
-      guint *refs = &g_array_index(edge_refs, guint, eid);
-      (*refs)++;
-    }
+    g_hash_table_insert(prev_stores,  target, GINT_TO_POINTER(eid));
+    guint *refs = &g_array_index(edge_refs, guint, eid);
+    (*refs)++;
   }
 }
 
