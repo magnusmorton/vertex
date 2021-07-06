@@ -49,6 +49,7 @@ struct memory_node {
 igraph_t mem_graph;
 
 GHashTable *prev_stores;
+GArray *edge_refs;
 
 int numPlaces (int n) {
   if (n < 0) n = (n == INT_MIN) ? INT_MAX : -n;
@@ -79,9 +80,11 @@ int init_san() {
   init_array(&root_nodes, ROOT_CHUNK, sizeof(struct memory_node));
   igraph_empty(&mem_graph, 0, IGRAPH_DIRECTED);
   prev_stores = g_hash_table_new(NULL, NULL);
+  edge_refs = g_array_sized_new(FALSE, TRUE, sizeof(guint), EDGE_CHUNK);
+
   inited = 1;
   atexit(&finish_san);
-  // realisitically, any errors are going to be unrecoverable here
+  // realisitcally, any errors are going to be unrecoverable here
   return 0;
 
 }
@@ -128,18 +131,30 @@ void _handle_store(void *target, void *source) {
   long si = search_roots(source);
 
   if (ti >= 0 && si >= 0) {
-    printf("handling store..... %p\n", target);
+    fprintf(stderr, "handling store..... %p\n", target);
+    fprintf(stderr, "adding edge from %ld to %ld\n", si,ti);
     igraph_add_edge(&mem_graph, si, ti);
-    igraph_integer_t eid = igraph_ecount(&mem_graph) - 1;
+    igraph_integer_t num_edges = igraph_ecount(&mem_graph);
+    igraph_integer_t eid = num_edges - 1;
+
+    if (num_edges > edge_refs->len)
+      g_array_set_size(edge_refs, edge_refs->len + EDGE_CHUNK);
+      
     gpointer ret;
     gboolean prev = g_hash_table_lookup_extended(prev_stores, target, NULL, &ret);
     if (prev) {
-      printf("previous store. eid: %d\n", GPOINTER_TO_INT(ret));
+      gint prev_edge = GPOINTER_TO_INT(ret);
+      guint *refs = &g_array_index(edge_refs, guint, prev_edge);
+      (*refs)--;
+      if (*refs == 0) {
+        fprintf(stderr, "deleting edge %d\n", prev_edge);
+        igraph_delete_edges(&mem_graph, igraph_ess_1(prev_edge));
+      }
     }
     else {
-      
       int res = g_hash_table_insert(prev_stores,  target, GINT_TO_POINTER(eid));
-      printf("new store: %d\n", res);
+      guint *refs = &g_array_index(edge_refs, guint, eid);
+      (*refs)++;
     }
   }
 }
