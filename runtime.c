@@ -122,24 +122,24 @@ void _check_ptr(void *ptr, const char *file, unsigned line) {
 }
 
 void _handle_store(void *target, void *source) {
-  printf("handling store.....\n");
+
 
   long ti = search_roots(target);
   long si = search_roots(source);
-  printf("source: %ld; sink: %ld;\n", si, ti);
 
-  if (ti < 0 || si < 0) {
-    fprintf(stderr, "target or source not found\n");
-  } else { 
+  if (ti >= 0 && si >= 0) {
+    printf("handling store..... %p\n", target);
     igraph_add_edge(&mem_graph, si, ti);
     igraph_integer_t eid = igraph_ecount(&mem_graph) - 1;
-    gpointer prev;
-    if ((prev = g_hash_table_lookup(prev_stores, &target))) {
-      printf("previous store\n");
+    gpointer ret;
+    gboolean prev = g_hash_table_lookup_extended(prev_stores, target, NULL, &ret);
+    if (prev) {
+      printf("previous store. eid: %d\n", GPOINTER_TO_INT(ret));
     }
     else {
-      printf("new store\n");
-      g_hash_table_insert(prev_stores, GINT_TO_POINTER(target), GINT_TO_POINTER(eid));
+      
+      int res = g_hash_table_insert(prev_stores,  target, GINT_TO_POINTER(eid));
+      printf("new store: %d\n", res);
     }
   }
 }
