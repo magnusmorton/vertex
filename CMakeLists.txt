@@ -34,7 +34,7 @@ add_library(runtime SHARED
   )
 target_link_libraries(runtime PkgConfig::IGRAPH PkgConfig::GLIB)
 set_target_properties(runtime PROPERTIES
-    COMPILE_FLAGS "-g"
+    COMPILE_FLAGS "-g -Wall"
 )
 
 target_compile_features(MemPass PRIVATE cxx_range_for cxx_auto_type)
@@ -44,6 +44,6 @@ foreach ( sourcefile ${EXAMPLES} )
   add_executable( ${exname} ${sourcefile} )
   target_link_libraries( ${exname} runtime PkgConfig::IGRAPH )
   set_target_properties( ${exname} PROPERTIES
-    COMPILE_FLAGS "-O1 -g -fexperimental-new-pass-manager  -fpass-plugin=./libMemPass.so")
+    COMPILE_FLAGS "-O1 -g -Wall -fexperimental-new-pass-manager  -fpass-plugin=./libMemPass.so")
   add_dependencies( ${exname} MemPass )
 endforeach ( sourcefile ${EXAMPLES} )
