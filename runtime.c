@@ -117,9 +117,11 @@ void _handle_store(void *target, void *source) {
   if (t_found && s_found ) {
     fprintf(stderr, "handling store..... %p\n", target);
     fprintf(stderr, "adding edge from %ld to %ld\n", si,ti);
+
+    // TODO: fix this. what about parallel edges?
     igraph_add_edge(&mem_graph, si, ti);
     igraph_integer_t num_edges = igraph_ecount(&mem_graph);
-    igraph_integer_t eid = num_edges - 1;
+    igraph_integer_t eid = num_edges - 1; // this doesn't work if edge exists
 
     if (num_edges > edge_refs->len)
       g_array_set_size(edge_refs, edge_refs->len + EDGE_CHUNK);
