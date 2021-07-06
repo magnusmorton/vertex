@@ -87,13 +87,15 @@ int init_san() {
 
 }
 
-long search_roots(void *addr) {
+int search_roots(void *addr, unsigned long *index) {
   for (size_t i = 0; i < root_nodes->len; i++) {
     struct memory_node *mem = &g_array_index(root_nodes, struct memory_node, i);
-    if (addr >= mem->addr && addr < mem->addr + mem->extent )
-      return i;
+    if (addr >= mem->addr && addr < mem->addr + mem->extent ) {
+      *index = i;
+      return 1;
+    }
   }
-  return -1;
+  return 0;
 }
 
 void _mark_root(const char* label, void *ptr, size_t size, const char* file, unsigned line) {
@@ -122,12 +124,11 @@ void _check_ptr(void *ptr, const char *file, unsigned line) {
 }
 
 void _handle_store(void *target, void *source) {
+  unsigned long ti, si;
+  int t_found = search_roots(target, &ti);
+  int s_found = search_roots(source, &si);
 
-
-  long ti = search_roots(target);
-  long si = search_roots(source);
-
-  if (ti >= 0 && si >= 0) {
+  if (t_found && s_found ) {
     fprintf(stderr, "handling store..... %p\n", target);
     fprintf(stderr, "adding edge from %ld to %ld\n", si,ti);
     igraph_add_edge(&mem_graph, si, ti);
