@@ -76,7 +76,7 @@ void finish_san() {
 }
 
 int init_san() {
-  printf("initing runtime....\n");
+  fprintf(stderr, "initing runtime....\n");
   init_array(&root_nodes, ROOT_CHUNK, sizeof(struct memory_node));
   igraph_empty(&mem_graph, 0, IGRAPH_DIRECTED);
   prev_stores = g_hash_table_new(NULL, NULL);
@@ -102,7 +102,7 @@ void _mark_root(const char* label, void *ptr, size_t size, const char* file, uns
   if (!inited)
     init_san();
   
-  printf("ROOT at ptr %p, extent %lu, label %s, file %s:%d\n", ptr, size, label, file, line);
+  fprintf(stderr, "ROOT at ptr %p, extent %lu, label %s, file %s:%d\n", ptr, size, label, file, line);
   struct memory_node nd = {.addr = ptr, .extent = size};
   array_push(&root_nodes, &nd);
   igraph_add_vertices(&mem_graph, 1, NULL);
@@ -115,13 +115,12 @@ void _check_ptr(void *ptr, const char *file, unsigned line) {
     struct memory_node *nd = array_get(&root_nodes, i);
     if (ptr >= nd->addr && ptr < nd->addr + nd->extent) {
 
-      printf("ptr %p (%s:%d) belongs to root %p\n", ptr, file, line, nd->addr);
+      fprintf(stderr, "ptr %p (%s:%d) belongs to root %p\n", ptr, file, line, nd->addr);
       count++;
     }
   }
-  printf("count: %d\n", count);
   if (count > 1)
-    printf("\tprobable indirection\n"); 
+    fprintf(stderr, "\tprobable indirection\n"); 
 }
 
 void _handle_store(void *target, void *source) {
