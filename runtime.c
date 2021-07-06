@@ -150,7 +150,7 @@ void _handle_store(void *target, void *source) {
       }
     }
     else {
-      int res = g_hash_table_insert(prev_stores,  target, GINT_TO_POINTER(eid));
+      g_hash_table_insert(prev_stores,  target, GINT_TO_POINTER(eid));
       guint *refs = &g_array_index(edge_refs, guint, eid);
       (*refs)++;
     }
