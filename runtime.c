@@ -67,6 +67,8 @@ int numPlaces (int n) {
 
 void finish_san() {
   free_array(&root_nodes);
+  g_array_free(edge_refs, TRUE);
+  g_hash_table_destroy(prev_stores);
 
   FILE *f = fopen("graph.dot", "w");
   igraph_write_graph_dot(&mem_graph, f);
