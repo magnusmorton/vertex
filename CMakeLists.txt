@@ -30,7 +30,6 @@ add_library(MemPass MODULE
 
 add_library(runtime SHARED
   runtime.c
-  util.c
   )
 target_link_libraries(runtime PkgConfig::IGRAPH PkgConfig::GLIB)
 set_target_properties(runtime PROPERTIES
