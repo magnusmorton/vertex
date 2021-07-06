@@ -19,8 +19,11 @@ int main() {
   b = malloc(sizeof(link));
   c = malloc(sizeof(link));
   a->data = 1;
+  a->next = NULL;
   b->data = 2;
+  b->next = NULL;
   c->data = 3;
+  c->next = NULL;
   insert_append (a, b);
   insert_append (a, c);
   free(a);
