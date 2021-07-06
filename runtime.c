@@ -25,7 +25,6 @@
 #include <igraph/igraph.h>
 
 #include "runtime.h"
-#include "util.h"
 
 #define ROOT_CHUNK 512
 #define EDGE_CHUNK 1024
@@ -33,10 +32,6 @@
 const int base_size = 7;
 
 static int inited = 0;
-
-mag_array roots;
-
-mag_array root_nodes;
 
 
 struct memory_node {
@@ -50,6 +45,7 @@ igraph_t mem_graph;
 
 GHashTable *prev_stores;
 GArray *edge_refs;
+GArray *root_nodes;
 
 int numPlaces (int n) {
   if (n < 0) n = (n == INT_MIN) ? INT_MAX : -n;
@@ -66,7 +62,7 @@ int numPlaces (int n) {
 }
 
 void finish_san() {
-  free_array(&root_nodes);
+  g_array_free(root_nodes, TRUE);
   g_array_free(edge_refs, TRUE);
   g_hash_table_destroy(prev_stores);
 
@@ -79,7 +75,7 @@ void finish_san() {
 
 int init_san() {
   fprintf(stderr, "initing runtime....\n");
-  init_array(&root_nodes, ROOT_CHUNK, sizeof(struct memory_node));
+  root_nodes = g_array_sized_new(FALSE, FALSE, sizeof(struct memory_node), ROOT_CHUNK);
   igraph_empty(&mem_graph, 0, IGRAPH_DIRECTED);
   prev_stores = g_hash_table_new(NULL, NULL);
   edge_refs = g_array_sized_new(FALSE, TRUE, sizeof(guint), EDGE_CHUNK);
@@ -92,8 +88,8 @@ int init_san() {
 }
 
 long search_roots(void *addr) {
-  for (size_t i = 0; i < root_nodes.length; i++) {
-    struct memory_node *mem = array_get(&root_nodes, i);
+  for (size_t i = 0; i < root_nodes->len; i++) {
+    struct memory_node *mem = &g_array_index(root_nodes, struct memory_node, i);
     if (addr >= mem->addr && addr < mem->addr + mem->extent )
       return i;
   }
@@ -106,15 +102,15 @@ void _mark_root(const char* label, void *ptr, size_t size, const char* file, uns
   
   fprintf(stderr, "ROOT at ptr %p, extent %lu, label %s, file %s:%d\n", ptr, size, label, file, line);
   struct memory_node nd = {.addr = ptr, .extent = size};
-  array_push(&root_nodes, &nd);
+  g_array_append_val(root_nodes, nd);
   igraph_add_vertices(&mem_graph, 1, NULL);
 
 }
 
 void _check_ptr(void *ptr, const char *file, unsigned line) {
   unsigned count = 0;
-  for (unsigned long i = 0; i < root_nodes.length; i++) {
-    struct memory_node *nd = array_get(&root_nodes, i);
+  for (unsigned long i = 0; i < root_nodes->len; i++) {
+    struct memory_node *nd = &g_array_index(root_nodes, struct memory_node, i);
     if (ptr >= nd->addr && ptr < nd->addr + nd->extent) {
 
       fprintf(stderr, "ptr %p (%s:%d) belongs to root %p\n", ptr, file, line, nd->addr);
