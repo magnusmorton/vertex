@@ -121,10 +121,10 @@ void _handle_store(void *target, void *source) {
     fprintf(stderr, "handling store..... %p\n", target);
     fprintf(stderr, "adding edge from %ld to %ld\n", si,ti);
 
-    // TODO: fix this. what about parallel edges?
+    // TODO: I feel this shouldn't work, but it does
     igraph_add_edge(&mem_graph, si, ti);
     igraph_integer_t num_edges = igraph_ecount(&mem_graph);
-    igraph_integer_t eid = num_edges - 1; // this doesn't work if edge exists
+    igraph_integer_t eid = num_edges - 1; // igraph allows multiple edges between nodes
 
     if (num_edges > edge_refs->len)
       g_array_set_size(edge_refs, edge_refs->len + EDGE_CHUNK);
