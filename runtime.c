@@ -110,6 +110,9 @@ void _check_ptr(void *ptr, const char *file, unsigned line) {
 }
 
 void _handle_store(void *target, void *source) {
+  if (!inited)
+    init_san();
+  
   unsigned long ti, si;
   int t_found = search_roots(target, &ti);
   int s_found = search_roots(source, &si);
