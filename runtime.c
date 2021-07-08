@@ -120,8 +120,8 @@ void _handle_store(void *target, void *source) {
 
     // TODO: I feel this shouldn't work, but it does
     igraph_add_edge(&mem_graph, si, ti);
-    igraph_integer_t num_edges = igraph_ecount(&mem_graph);
-    igraph_integer_t eid = num_edges - 1; // igraph allows multiple edges between nodes
+    igraph_integer_t eid;
+    igraph_get_eid(&mem_graph, &eid, si, ti, IGRAPH_DIRECTED, FALSE);
 
     gpointer ret;
     if (g_hash_table_lookup_extended(prev_stores, target, NULL, &ret)) {
