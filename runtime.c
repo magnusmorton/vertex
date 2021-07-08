@@ -44,12 +44,10 @@ struct memory_node {
 igraph_t mem_graph;
 
 GHashTable *prev_stores;
-GArray *edge_refs;
 GArray *root_nodes;
 
 void finish_san() {
   g_array_free(root_nodes, TRUE);
-  g_array_free(edge_refs, TRUE);
   g_hash_table_destroy(prev_stores);
 
   FILE *f = fopen("graph.dot", "w");
@@ -64,7 +62,6 @@ int init_san() {
   root_nodes = g_array_sized_new(FALSE, FALSE, sizeof(struct memory_node), ROOT_CHUNK);
   igraph_empty(&mem_graph, 0, IGRAPH_DIRECTED);
   prev_stores = g_hash_table_new(NULL, NULL);
-  edge_refs = g_array_sized_new(FALSE, TRUE, sizeof(guint), EDGE_CHUNK);
 
   inited = 1;
   atexit(&finish_san);
@@ -126,23 +123,13 @@ void _handle_store(void *target, void *source) {
     igraph_integer_t num_edges = igraph_ecount(&mem_graph);
     igraph_integer_t eid = num_edges - 1; // igraph allows multiple edges between nodes
 
-    if (num_edges > edge_refs->len)
-      g_array_set_size(edge_refs, edge_refs->len + EDGE_CHUNK);
-      
     gpointer ret;
-    gboolean prev = g_hash_table_lookup_extended(prev_stores, target, NULL, &ret);
-    if (prev) {
+    if (g_hash_table_lookup_extended(prev_stores, target, NULL, &ret)) {
       gint prev_edge = GPOINTER_TO_INT(ret);
-      guint *refs = &g_array_index(edge_refs, guint, prev_edge);
-      (*refs)--;
-      if (*refs == 0) {
-        fprintf(stderr, "deleting edge %d\n", prev_edge);
-        igraph_delete_edges(&mem_graph, igraph_ess_1(prev_edge));
-      }
+      fprintf(stderr, "deleting edge %d\n", prev_edge);
+      igraph_delete_edges(&mem_graph, igraph_ess_1(prev_edge));
     }
     g_hash_table_insert(prev_stores,  target, GINT_TO_POINTER(eid));
-    guint *refs = &g_array_index(edge_refs, guint, eid);
-    (*refs)++;
   }
 }
 
