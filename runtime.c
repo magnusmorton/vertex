@@ -46,7 +46,25 @@ igraph_t mem_graph;
 GHashTable *prev_stores;
 GArray *root_nodes;
 
+void detect() {
+
+  /**
+     separate connected commponents are obviously separate data structures
+  **/
+  igraph_vector_ptr_t components;
+  igraph_vector_ptr_init(&components, 1);
+
+  igraph_decompose(&mem_graph, &components, IGRAPH_WEAK, -1, 1);
+
+  size_t ccs = igraph_vector_ptr_size(&components);
+  fprintf(stderr, "number of datastructures: %lu\n", ccs);
+
+  igraph_decompose_destroy(&components);
+}
+
 void finish_san() {
+  detect();
+  
   g_array_free(root_nodes, TRUE);
   g_hash_table_destroy(prev_stores);
 
