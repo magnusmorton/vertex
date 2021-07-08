@@ -116,7 +116,7 @@ void _handle_store(void *target, void *source) {
 
   if (t_found && s_found ) {
     fprintf(stderr, "handling store..... %p\n", target);
-    fprintf(stderr, "adding edge from %ld to %ld\n", si,ti);
+    fprintf(stderr, "adding edge from %ld to %ld\n", si, ti);
 
     // TODO: I feel this shouldn't work, but it does
     igraph_add_edge(&mem_graph, si, ti);
