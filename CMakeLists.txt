@@ -46,3 +46,6 @@ foreach ( sourcefile ${EXAMPLES} )
     COMPILE_FLAGS "-O1 -g -Wall -fexperimental-new-pass-manager  -fpass-plugin=./libMemPass.so")
   add_dependencies( ${exname} MemPass )
 endforeach ( sourcefile ${EXAMPLES} )
+
+enable_testing()
+add_subdirectory(tests)
