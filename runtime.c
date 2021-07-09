@@ -27,12 +27,8 @@
 #include "runtime.h"
 
 #define ROOT_CHUNK 512
-#define EDGE_CHUNK 1024
-
-const int base_size = 7;
 
 static int inited = 0;
-
 
 struct memory_node {
   void *addr;
