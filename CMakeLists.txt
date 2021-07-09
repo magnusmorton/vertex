@@ -47,5 +47,10 @@ foreach ( sourcefile ${EXAMPLES} )
   add_dependencies( ${exname} MemPass )
 endforeach ( sourcefile ${EXAMPLES} )
 
-enable_testing()
+
 add_subdirectory(tests)
+
+add_custom_target(test
+  COMMAND ./tests/unittests)
+
+add_dependencies(test unittests)
