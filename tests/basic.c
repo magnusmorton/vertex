@@ -6,15 +6,20 @@ extern void _mark_root(const char* label, void *ptr, size_t size, const char* fi
 
 static void test_no_data() {
   // do nothing
-  
-  g_assert_true(detect(NULL) == 0);
+
+  GArray *detected = get_detected();
+  g_assert_true(detected->len ==0);
+  g_array_free(detected, TRUE);
 }
 
 static void test_1_data() {
   void *ptr = 0x94;
   _mark_root("foo", ptr, 8, NULL, 0);
-  g_assert_true(detect(NULL) == 1);
+  GArray *detected = get_detected();
+  g_assert_true(detected->len == 1);
+  g_array_free(detected, TRUE);
 }
+
 
 int main(int argc, char *argv[]) {
   g_test_init (&argc, &argv, NULL);

@@ -1,12 +1,16 @@
 #include <stdlib.h>
 
-enum Detected {
+#include <gmodule.h>
+
+typedef enum Detected {
   LL,
   ARRAY,
   TREE,
   GRAPH,
-  NONE
-};
+  MAYBE
+} Detected;
+
+GArray* get_detected();
 
 /* #ifdef __cplusplus */
 /* extern "C" */

@@ -42,7 +42,7 @@ igraph_t mem_graph;
 GHashTable *prev_stores;
 GArray *root_nodes;
 
-int detect(Detected detected[]) {
+GArray *get_detected() {
 
   /**
      separate connected commponents are obviously separate data structures
@@ -53,23 +53,28 @@ int detect(Detected detected[]) {
   igraph_decompose(&mem_graph, &components, IGRAPH_WEAK, -1, 1);
 
   size_t ccs = igraph_vector_ptr_size(&components);
-
-
+  
   igraph_decompose_destroy(&components);
-  return ccs;
+  igraph_vector_ptr_destroy(&components);
+
+  Detected maybe = MAYBE;
+  GArray *structures = g_array_sized_new(FALSE, FALSE, sizeof(Detected), ccs);
+  for (size_t i = 0; i < ccs; i++)
+    g_array_append_val(structures, maybe);
+  return structures;
 }
 
 void finish_san() {
-  Detected detected[10];
-  int ccs = detect(detected);
-  fprintf(stderr, "number of datastructures: %d\n", ccs);
-  g_array_free(root_nodes, TRUE);
-  g_hash_table_destroy(prev_stores);
+  GArray *detected = get_detected();
+  fprintf(stderr, "number of datastructures: %d\n", detected->len);
 
   FILE *f = fopen("graph.dot", "w");
   igraph_write_graph_dot(&mem_graph, f);
   fclose(f);
-  
+
+  g_array_free(detected, TRUE);
+  g_array_free(root_nodes, TRUE);
+  g_hash_table_destroy(prev_stores);  
   igraph_destroy(&mem_graph);
 }
 
