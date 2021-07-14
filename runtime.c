@@ -85,7 +85,6 @@ int init_san() {
   prev_stores = g_hash_table_new(NULL, NULL);
 
   inited = 1;
-  atexit(&finish_san);
   // realisitcally, any errors are going to be unrecoverable here
   return 0;
 
