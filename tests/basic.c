@@ -2,10 +2,6 @@
 
 #include "runtime.h"
 
-extern void _mark_root(const char* label, void *ptr, size_t size, const char* file, unsigned line);
-
-
-
 static void
 set_up_fixture(GArray **array,
                gconstpointer data)
@@ -37,7 +33,7 @@ test_1_data(GArray **detected,
             gconstpointer data)
 {
   void *ptr = 0x94;
-  _mark_root("foo", ptr, 8, NULL, 0);
+  mark_root("foo", ptr, 8, NULL, 0);
   *detected = get_detected();
   g_assert_true((*detected)->len == 1);
 }
