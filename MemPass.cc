@@ -6,6 +6,7 @@
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Support/raw_ostream.h"
+#include "llvm/Transforms/Utils/ModuleUtils.h"
 #include "llvm/IR/DebugLoc.h"
 #include "llvm/IR/DebugInfoMetadata.h"
 
@@ -13,7 +14,7 @@
 
 using namespace llvm;
 
-FunctionCallee create_func, check_func, store_func;
+FunctionCallee create_func, check_func, store_func, init_func, finish_func;
 
 bool debug;
 
@@ -27,7 +28,17 @@ PreservedAnalyses MemPass::run(Module &M, ModuleAnalysisManager &MAM) {
   LLVMContext &ctx = M.getContext();
   int64ty = Type::getInt64Ty(ctx);
   charstar = Type::getInt8PtrTy(ctx);
- 
+
+  init_func = M.getOrInsertFunction(
+    "init_san",
+    Type::getInt32Ty(ctx)
+    );
+
+  finish_func = M.getOrInsertFunction(
+    "finish_san",
+    Type::getVoidTy(ctx)
+    );
+
   create_func = M.getOrInsertFunction(
     "_mark_root",
     Type::getVoidTy(ctx),
@@ -56,6 +67,10 @@ PreservedAnalyses MemPass::run(Module &M, ModuleAnalysisManager &MAM) {
 
   // are we debug?
   debug = M.getNamedMetadata("llvm.dbg.cu") != NULL;
+
+  /* I have no idea of what the priority value means, but it doesn't matter */
+  appendToGlobalCtors(M, cast<Function>(init_func.getCallee()), 99, NULL);
+  appendToGlobalDtors(M, cast<Function>(finish_func.getCallee()), 99, NULL);
   
   visit(M);
   return PreservedAnalyses::none();
