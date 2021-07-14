@@ -28,8 +28,6 @@
 
 #define ROOT_CHUNK 512
 
-static int inited = 0;
-
 struct memory_node {
   void *addr;
   size_t extent;
@@ -84,7 +82,6 @@ int init_san() {
   igraph_empty(&mem_graph, 0, IGRAPH_DIRECTED);
   prev_stores = g_hash_table_new(NULL, NULL);
 
-  inited = 1;
   // realisitcally, any errors are going to be unrecoverable here
   return 0;
 
@@ -102,9 +99,6 @@ int search_roots(void *addr, unsigned long *index) {
 }
 
 void _mark_root(const char* label, void *ptr, size_t size, const char* file, unsigned line) {
-  if (!inited)
-    init_san();
-  
   fprintf(stderr, "ROOT at ptr %p, extent %lu, label %s, file %s:%d\n", ptr, size, label, file, line);
   struct memory_node nd = {.addr = ptr, .extent = size};
   g_array_append_val(root_nodes, nd);
@@ -127,9 +121,6 @@ void _check_ptr(void *ptr, const char *file, unsigned line) {
 }
 
 void _handle_store(void *target, void *source) {
-  if (!inited)
-    init_san();
-  
   unsigned long ti, si;
   int t_found = search_roots(target, &ti);
   int s_found = search_roots(source, &si);
