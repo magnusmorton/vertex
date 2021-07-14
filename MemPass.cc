@@ -40,7 +40,7 @@ PreservedAnalyses MemPass::run(Module &M, ModuleAnalysisManager &MAM) {
     );
 
   create_func = M.getOrInsertFunction(
-    "_mark_root",
+    "mark_root",
     Type::getVoidTy(ctx),
     Type::getInt8PtrTy(ctx),
     Type::getInt8PtrTy(ctx),
@@ -50,7 +50,7 @@ PreservedAnalyses MemPass::run(Module &M, ModuleAnalysisManager &MAM) {
     );
   
   check_func = M.getOrInsertFunction(
-    "_check_ptr",
+    "check_ptr",
     Type::getVoidTy(ctx),
     Type::getInt8PtrTy(ctx),
     charstar,
@@ -58,7 +58,7 @@ PreservedAnalyses MemPass::run(Module &M, ModuleAnalysisManager &MAM) {
     );
 
   store_func = M.getOrInsertFunction(
-    "_handle_store",
+    "handle_store",
     Type::getVoidTy(ctx),
     Type::getInt8PtrTy(ctx),
     Type::getInt8PtrTy(ctx)

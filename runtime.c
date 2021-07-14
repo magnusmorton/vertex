@@ -97,7 +97,7 @@ int search_roots(void *addr, unsigned long *index) {
   return 0;
 }
 
-void _mark_root(const char* label, void *ptr, size_t size, const char* file, unsigned line) {
+void mark_root(const char* label, void *ptr, size_t size, const char* file, unsigned line) {
   fprintf(stderr, "ROOT at ptr %p, extent %lu, label %s, file %s:%d\n", ptr, size, label, file, line);
   struct memory_node nd = {.addr = ptr, .extent = size};
   g_array_append_val(root_nodes, nd);
@@ -105,7 +105,7 @@ void _mark_root(const char* label, void *ptr, size_t size, const char* file, uns
 
 }
 
-void _check_ptr(void *ptr, const char *file, unsigned line) {
+void check_ptr(void *ptr, const char *file, unsigned line) {
   unsigned count = 0;
   for (unsigned long i = 0; i < root_nodes->len; i++) {
     struct memory_node *nd = &g_array_index(root_nodes, struct memory_node, i);
@@ -119,7 +119,7 @@ void _check_ptr(void *ptr, const char *file, unsigned line) {
     fprintf(stderr, "\tprobable indirection\n"); 
 }
 
-void _handle_store(void *target, void *source) {
+void handle_store(void *target, void *source) {
   unsigned long ti, si;
   int t_found = search_roots(target, &ti);
   int s_found = search_roots(source, &si);
