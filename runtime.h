@@ -27,6 +27,9 @@ GArray* get_detected();
 /* #endif */
 /* void _handle_store(char *target, char *source); */
 
+int init_san();
+void finish_san();
+
 #ifdef __cplusplus
 extern "C"
 #endif
