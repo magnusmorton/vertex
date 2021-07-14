@@ -10,7 +10,7 @@ static void
 set_up_fixture(GArray **array,
                gconstpointer data)
 {
-  /* do nothing */
+  init_san();
   *array = NULL;
 }
 
@@ -19,6 +19,7 @@ tear_down_fixture(GArray **array,
                   gconstpointer data)
 {
   g_array_free(*array, TRUE);
+  finish_san();
 }
 
 static void
