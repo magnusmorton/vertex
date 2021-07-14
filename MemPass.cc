@@ -21,12 +21,6 @@ Type* int64ty;
 Type* charstar;
 const DataLayout *dataLayout;
 
-PreservedAnalyses MemPass::run(Function &F, FunctionAnalysisManager &M) {
-  IRBuilder<> builder(F.getContext());
-  visit(F);
-  return PreservedAnalyses::all();
-};
-
 PreservedAnalyses MemPass::run(Module &M, ModuleAnalysisManager &MAM) {
   std::cout << "mempass running.....\n";
   dataLayout = &M.getDataLayout();
