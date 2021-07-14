@@ -34,7 +34,6 @@ struct memory_node {
   
 };
 
-
 igraph_t mem_graph;
 
 GHashTable *prev_stores;
@@ -142,4 +141,3 @@ void _handle_store(void *target, void *source) {
     g_hash_table_insert(prev_stores,  target, GINT_TO_POINTER(eid));
   }
 }
-
