@@ -34,6 +34,8 @@ struct memory_node {
   
 };
 
+static int inited = 0;
+
 igraph_t mem_graph;
 
 GHashTable *prev_stores;
@@ -62,6 +64,8 @@ GArray *get_detected() {
 }
 
 void finish_san() {
+  if (!inited)
+    return;
   GArray *detected = get_detected();
   fprintf(stderr, "number of datastructures: %d\n", detected->len);
 
@@ -73,14 +77,17 @@ void finish_san() {
   g_array_free(root_nodes, TRUE);
   g_hash_table_destroy(prev_stores);  
   igraph_destroy(&mem_graph);
+  inited = 0;
 }
 
 int init_san() {
+  if (inited)
+    return 1;
   fprintf(stderr, "initing runtime....\n");
   root_nodes = g_array_sized_new(FALSE, FALSE, sizeof(struct memory_node), ROOT_CHUNK);
   igraph_empty(&mem_graph, 0, IGRAPH_DIRECTED);
   prev_stores = g_hash_table_new(NULL, NULL);
-
+  inited = 1;
   // realisitcally, any errors are going to be unrecoverable here
   return 0;
 
