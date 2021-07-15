@@ -38,11 +38,25 @@ test_1_data(GArray **detected,
   g_assert_true((*detected)->len == 1);
 }
 
+static void
+test_2_data(GArray **detected,
+            gconstpointer data)
+{
+  void *ptr1 = 0x94;
+  void *ptr2 = 0xdeadbeef;
+  mark_root("foo", ptr1, 8, NULL, 0);
+  mark_root("bar", ptr2, 64, NULL, 0);
+  *detected = get_detected();
+  g_assert_true((*detected)->len == 2);
+}
+
 int main(int argc, char *argv[]) {
   g_test_init (&argc, &argv, NULL);
   g_test_add("/basic/no_data", GArray*, NULL,
              set_up_fixture, test_no_data, tear_down_fixture);
   g_test_add("/basic/one_data", GArray*, NULL,
                   set_up_fixture, test_1_data, tear_down_fixture);
+  g_test_add("/basic/two_data", GArray*, NULL,
+                  set_up_fixture, test_2_data, tear_down_fixture);
   return g_test_run();
 }
