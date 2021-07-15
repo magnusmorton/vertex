@@ -59,7 +59,8 @@ get_detected()
 	igraph_vector_ptr_destroy(&components);
 
 	Detected maybe = MAYBE;
-	GArray *structures = g_array_sized_new(FALSE, FALSE, sizeof(Detected), ccs);
+	GArray *structures = g_array_sized_new(FALSE, FALSE,
+					       sizeof(Detected), ccs);
 	for (size_t i = 0; i < ccs; i++)
 		g_array_append_val(structures, maybe);
 	return structures;
@@ -90,7 +91,8 @@ init_san()
 	if (inited)
 		return 1;
 	fprintf(stderr, "initing runtime....\n");
-	root_nodes = g_array_sized_new(FALSE, FALSE, sizeof(struct memory_node), ROOT_CHUNK);
+	root_nodes = g_array_sized_new(FALSE, FALSE, sizeof(struct memory_node),
+				       ROOT_CHUNK);
 	igraph_empty(&mem_graph, 0, IGRAPH_DIRECTED);
 	prev_stores = g_hash_table_new(NULL, NULL);
 	inited = 1;
@@ -103,7 +105,8 @@ int
 search_roots(void *addr, unsigned long *index)
 {
 	for (size_t i = 0; i < root_nodes->len; i++) {
-		struct memory_node *mem = &g_array_index(root_nodes, struct memory_node, i);
+		struct memory_node *mem = &g_array_index(root_nodes,
+							 struct memory_node, i);
 		if (addr >= mem->addr && addr < mem->addr + mem->extent ) {
 			*index = i;
 			return 1;
@@ -113,9 +116,11 @@ search_roots(void *addr, unsigned long *index)
 }
 
 void
-mark_root(const char* label, void *ptr, size_t size, const char* file, unsigned line)
+mark_root(const char* label, void *ptr,
+	  size_t size, const char* file, unsigned line)
 {
-	fprintf(stderr, "ROOT at ptr %p, extent %lu, label %s, file %s:%d\n", ptr, size, label, file, line);
+	fprintf(stderr, "ROOT at ptr %p, extent %lu, label %s, file %s:%d\n",
+		ptr, size, label, file, line);
 	struct memory_node nd = {.addr = ptr, .extent = size};
 	g_array_append_val(root_nodes, nd);
 	igraph_add_vertices(&mem_graph, 1, NULL);
@@ -127,10 +132,12 @@ check_ptr(void *ptr, const char *file, unsigned line)
 {
 	unsigned count = 0;
 	for (unsigned long i = 0; i < root_nodes->len; i++) {
-		struct memory_node *nd = &g_array_index(root_nodes, struct memory_node, i);
+		struct memory_node *nd = &g_array_index(root_nodes,
+							struct memory_node, i);
 		if (ptr >= nd->addr && ptr < nd->addr + nd->extent) {
 
-			fprintf(stderr, "ptr %p (%s:%d) belongs to root %p\n", ptr, file, line, nd->addr);
+			fprintf(stderr, "ptr %p (%s:%d) belongs to root %p\n",
+				ptr, file, line, nd->addr);
 			count++;
 		}
 	}
@@ -154,7 +161,8 @@ handle_store(void *target, void *source)
 		igraph_get_eid(&mem_graph, &eid, si, ti, IGRAPH_DIRECTED, FALSE);
 
 		gpointer ret;
-		if (g_hash_table_lookup_extended(prev_stores, target, NULL, &ret)) {
+		if (g_hash_table_lookup_extended(
+			    prev_stores, target, NULL, &ret)) {
 			gint prev_edge = GPOINTER_TO_INT(ret);
 			fprintf(stderr, "deleting edge %d\n", prev_edge);
 			igraph_delete_edges(&mem_graph, igraph_ess_1(prev_edge));
