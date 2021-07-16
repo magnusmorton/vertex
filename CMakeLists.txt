@@ -47,7 +47,6 @@ foreach ( sourcefile ${EXAMPLES} )
   add_dependencies( ${exname} MemPass )
 endforeach ( sourcefile ${EXAMPLES} )
 
-
 add_subdirectory(tests)
 
 add_custom_target(test
