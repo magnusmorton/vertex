@@ -41,6 +41,31 @@ igraph_t mem_graph;
 GHashTable *prev_stores;
 GArray *root_nodes;
 
+
+Detected
+detect_from_component(igraph_t *subgraph)
+{
+	igraph_vector_t in_degree, out_degree;
+	igraph_vector_init(&in_degree, 1);
+	igraph_vector_init(&out_degree, 1);
+
+	igraph_vs_t vertices;
+	igraph_vs_all(&vertices);
+
+	igraph_integer_t size;
+	igraph_vs_size(subgraph, &vertices, &size);
+	if (size == 1) {
+		fprintf(stderr, "array...\n");
+		return ARRAY;
+	}
+	else {
+		igraph_degree(subgraph, &in_degree, vertices, IGRAPH_IN, 1);
+		igraph_degree(subgraph, &out_degree, vertices, IGRAPH_OUT, 1);
+		
+	}
+	return MAYBE;
+}
+
 GArray*
 get_detected()
 {
@@ -55,14 +80,16 @@ get_detected()
 
 	size_t ccs = igraph_vector_ptr_size(&components);
   
+	GArray *structures = g_array_sized_new(FALSE, FALSE,
+					       sizeof(Detected), ccs);
+					      
+	for (size_t i = 0; i < ccs; i++){
+		Detected ds_type = detect_from_component(VECTOR(components)[i]);
+		g_array_append_val(structures, ds_type);
+	}
 	igraph_decompose_destroy(&components);
 	igraph_vector_ptr_destroy(&components);
 
-	Detected maybe = MAYBE;
-	GArray *structures = g_array_sized_new(FALSE, FALSE,
-					       sizeof(Detected), ccs);
-	for (size_t i = 0; i < ccs; i++)
-		g_array_append_val(structures, maybe);
 	return structures;
 }
 
