@@ -12,18 +12,18 @@ void insert_append (link *anchor, link *newlink) {
   anchor->next = newlink;
 }
 
+link *link_new(int data) {
+  link *tmp = malloc(sizeof(link));
+  tmp->next = NULL;
+  tmp->data = data;
+  return tmp;
+}
 
 int main() {
   link *a, *b, *c;
-  a = malloc(sizeof(link));
-  b = malloc(sizeof(link));
-  c = malloc(sizeof(link));
-  a->data = 1;
-  a->next = NULL;
-  b->data = 2;
-  b->next = NULL;
-  c->data = 3;
-  c->next = NULL;
+  a = link_new(1);
+  b = link_new(2);
+  c = link_new(3);
   insert_append (a, b);
   insert_append (a, c);
   free(a);
