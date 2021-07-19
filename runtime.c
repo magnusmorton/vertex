@@ -54,16 +54,32 @@ detect_from_component(igraph_t *subgraph)
 
 	igraph_integer_t size;
 	igraph_vs_size(subgraph, &vertices, &size);
+	Detected ret = MAYBE;
+	printf("size: %d\n", size);
 	if (size == 1) {
-		fprintf(stderr, "array...\n");
-		return ARRAY;
+		ret = ARRAY;
 	}
 	else {
 		igraph_degree(subgraph, &in_degree, vertices, IGRAPH_IN, 1);
 		igraph_degree(subgraph, &out_degree, vertices, IGRAPH_OUT, 1);
-		
+		int is_ll = 1;
+		for (int i = 0; i < size; i++) {
+			int in, out;
+			in = VECTOR(in_degree)[i];
+			out = VECTOR(out_degree)[i];
+			printf("in: %d out: %d i: %d\n", in, out, i);
+			if (in > 1 || out > 1) {
+				is_ll = 0;
+				break;
+			}
+		}
+		if (is_ll)
+			ret = LL;
 	}
-	return MAYBE;
+
+	igraph_vector_destroy(&in_degree);
+	igraph_vector_destroy(&out_degree);
+	return ret;
 }
 
 GArray*
@@ -83,7 +99,7 @@ get_detected()
 	GArray *structures = g_array_sized_new(FALSE, FALSE,
 					       sizeof(Detected), ccs);
 					      
-	for (size_t i = 0; i < ccs; i++){
+	for (int i = 0; i < ccs; i++){
 		Detected ds_type = detect_from_component(VECTOR(components)[i]);
 		g_array_append_val(structures, ds_type);
 	}
@@ -94,13 +110,34 @@ get_detected()
 }
 
 void
+decode_enum(Detected type, char *str)
+{
+	switch(type) {
+		case LL:
+			sprintf(str, "LL");
+			break;
+		case ARRAY:
+			sprintf(str, "ARRAY");
+			break;
+		case MAYBE:
+			sprintf(str, "MAYBE");
+			break;
+	}
+}
+
+void
 finish_san()
 {
 	if (!inited)
 		return;
 	GArray *detected = get_detected();
 	fprintf(stderr, "number of datastructures: %d\n", detected->len);
-
+	
+	char out[7];
+	for (int i = 0; i < detected->len; i++) {
+		decode_enum(g_array_index(detected, Detected,i), out);
+		fprintf(stderr, "Data structure %d: %s\n", i, out);
+	}
 	FILE *f = fopen("graph.dot", "w");
 	igraph_write_graph_dot(&mem_graph, f);
 	fclose(f);
