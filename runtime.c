@@ -113,15 +113,21 @@ void
 decode_enum(Detected type, char *str)
 {
 	switch(type) {
-		case LL:
-			sprintf(str, "LL");
-			break;
-		case ARRAY:
-			sprintf(str, "ARRAY");
-			break;
-		case MAYBE:
-			sprintf(str, "MAYBE");
-			break;
+	case LL:
+		sprintf(str, "LL");
+		break;
+	case ARRAY:
+		sprintf(str, "ARRAY");
+		break;
+	case GRAPH:
+		sprintf(str, "GRAPH");
+		break;
+	case TREE:
+		sprintf(str, "TREE");
+		break;
+	case MAYBE:
+		sprintf(str, "MAYBE");
+		break;
 	}
 }
 
