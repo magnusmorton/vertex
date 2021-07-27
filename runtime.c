@@ -56,18 +56,21 @@ detect_from_component(igraph_t *subgraph)
 	igraph_vs_size(subgraph, &vertices, &size);
 	Detected ret = MAYBE;
 	printf("size: %d\n", size);
+
+	/* Detect data structures inefficiently for now. Fuse loops later */
 	if (size == 1) {
 		ret = ARRAY;
 	}
 	else {
 		igraph_degree(subgraph, &in_degree, vertices, IGRAPH_IN, 1);
 		igraph_degree(subgraph, &out_degree, vertices, IGRAPH_OUT, 1);
+
+		/* try detecting single LL */
 		int is_ll = 1;
 		for (int i = 0; i < size; i++) {
 			int in, out;
 			in = VECTOR(in_degree)[i];
 			out = VECTOR(out_degree)[i];
-			printf("in: %d out: %d i: %d\n", in, out, i);
 			if (in > 1 || out > 1) {
 				is_ll = 0;
 				break;
@@ -75,6 +78,24 @@ detect_from_component(igraph_t *subgraph)
 		}
 		if (is_ll)
 			ret = LL;
+		int is_dll = 1;
+		for (int i = 0; i < size; i++) {
+			int in, out;
+			in = VECTOR(in_degree)[i];
+			out = VECTOR(out_degree)[i];
+			printf("in: %d out: %d i: %d\n", in, out, i);
+			if (in != 1 || out != 1 ) {
+				if ((!out && !i) || (!in && i != size)) {
+					is_dll = 0;
+					break;
+				}
+			}
+		}
+		if (is_dll) {
+			ret = LL;
+			fprintf(stderr, "DOUBLE\n");
+		}
+
 	}
 
 	igraph_vector_destroy(&in_degree);
