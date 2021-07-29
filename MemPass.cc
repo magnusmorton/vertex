@@ -119,7 +119,7 @@ void MemPass::visitCallInst(CallInst &callinst) {
 }
 
 void handleAlloca(AllocaInst &allInst, DILocation *loc) {
-  Optional<uint64_t> alloc_size = allInst.getAllocationSizeInBits(*dataLayout);
+  Optional<TypeSize> alloc_size = allInst.getAllocationSizeInBits(*dataLayout);
   assert(alloc_size.hasValue());
   size_t size = alloc_size.getValue() / 8;
 
@@ -178,6 +178,6 @@ extern "C" ::llvm::PassPluginLibraryInfo LLVM_ATTRIBUTE_WEAK
 llvmGetPassPluginInfo() {
   return {LLVM_PLUGIN_API_VERSION, "MemPass", "v0.1", [](PassBuilder &PB) {
             PB.registerPipelineStartEPCallback(
-                [](llvm::ModulePassManager &PM) { PM.addPass(MemPass()); });
+                [](llvm::ModulePassManager &PM, llvm::PassBuilder::OptimizationLevel opt) { PM.addPass(MemPass()); });
           }};
 }
