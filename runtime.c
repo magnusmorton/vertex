@@ -92,8 +92,7 @@ detect_from_component(igraph_t *subgraph)
 			}
 		}
 		if (is_dll) {
-			ret = LL;
-			fprintf(stderr, "DOUBLE\n");
+			ret = DOUBLE_LL;
 		}
 
 	}
@@ -137,6 +136,9 @@ decode_enum(Detected type, char *str)
 	case LL:
 		sprintf(str, "LL");
 		break;
+	case DOUBLE_LL:
+		sprintf(str, "DOUBLE LL");
+		break;
 	case ARRAY:
 		sprintf(str, "ARRAY");
 		break;
@@ -160,7 +162,7 @@ finish_san()
 	GArray *detected = get_detected();
 	fprintf(stderr, "number of datastructures: %d\n", detected->len);
 	
-	char out[7];
+	char out[16];
 	for (int i = 0; i < detected->len; i++) {
 		decode_enum(g_array_index(detected, Detected,i), out);
 		fprintf(stderr, "Data structure %d: %s\n", i, out);

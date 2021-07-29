@@ -4,11 +4,19 @@
 
 typedef enum Detected {
   LL,
+	DOUBLE_LL,
   ARRAY,
   TREE,
   GRAPH,
   MAYBE
 } Detected;
+
+
+struct DataType {
+	enum Detected type;
+	struct DataType *inner;
+};
+
 
 GArray* get_detected();
 
