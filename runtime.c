@@ -62,6 +62,12 @@ detect_from_component(igraph_t *subgraph)
 		ret = ARRAY;
 	}
 	else {
+		int is_tree = 0;
+		igraph_is_tree(subgraph, &is_tree, NULL, IGRAPH_ALL);
+		if (is_tree) {
+			ret = TREE;
+		}
+
 		igraph_degree(subgraph, &in_degree, vertices, IGRAPH_IN, 1);
 		igraph_degree(subgraph, &out_degree, vertices, IGRAPH_OUT, 1);
 
