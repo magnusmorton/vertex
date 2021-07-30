@@ -4,3 +4,5 @@ VertexConfig.h
 *~
 *.elc
 *.o
+graph.dot
+graph.png
