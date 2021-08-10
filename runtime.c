@@ -254,10 +254,11 @@ handle_store(void *target, void *source)
 	if (t_found && s_found ) {
 		fprintf(stderr, "handling store..... %p\n", target);
 		fprintf(stderr, "adding edge from %ld to %ld\n", si, ti);
-
-		igraph_add_edge(&mem_graph, si, ti);
+		
+		/* add edges in reverse order so first alloc is root */
+		igraph_add_edge(&mem_graph, ti, si);
 		igraph_integer_t eid;
-		igraph_get_eid(&mem_graph, &eid, si, ti, IGRAPH_DIRECTED, FALSE);
+		igraph_get_eid(&mem_graph, &eid, ti, si, IGRAPH_DIRECTED, FALSE);
 
 		gpointer ret;
 		if (g_hash_table_lookup_extended(
