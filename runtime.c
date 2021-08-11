@@ -31,7 +31,6 @@
 struct memory_node {
 	void *addr;
 	size_t extent;
-  
 };
 
 static int inited = 0;
@@ -121,10 +120,10 @@ get_detected()
 	igraph_decompose(&mem_graph, &components, IGRAPH_WEAK, -1, 1);
 
 	size_t ccs = igraph_vector_ptr_size(&components);
-  
+
 	GArray *structures = g_array_sized_new(FALSE, FALSE,
 					       sizeof(Detected), ccs);
-					      
+
 	for (int i = 0; i < ccs; i++){
 		Detected ds_type = detect_from_component(VECTOR(components)[i]);
 		g_array_append_val(structures, ds_type);
