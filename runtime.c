@@ -252,9 +252,16 @@ handle_store(void *target, void *source)
 	int s_found = search_roots(source, &si);
 
 	if (t_found && s_found ) {
-		fprintf(stderr, "handling store..... %p\n", target);
-		fprintf(stderr, "adding edge from %ld to %ld\n", si, ti);
+		fprintf(stderr, "handling store..... %p into %p\n", source, target);
+		fprintf(stderr, "adding edge from %ld to %ld\n", ti, si);
 		
+		struct memory_node *target_node = &g_array_index(root_nodes, 
+							struct memory_node,
+							ti);
+
+		long offset = target - target_node->addr;
+		fprintf(stderr, "offset: %ld\n", offset);
+
 		/* add edges in reverse order so first alloc is root */
 		igraph_add_edge(&mem_graph, ti, si);
 		igraph_integer_t eid;
