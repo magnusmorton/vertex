@@ -191,6 +191,7 @@ init_san()
 	fprintf(stderr, "initing runtime....\n");
 	root_nodes = g_array_sized_new(FALSE, FALSE, sizeof(struct memory_node),
 				       ROOT_CHUNK);
+	igraph_i_set_attribute_table(&igraph_cattribute_table);
 	igraph_empty(&mem_graph, 0, IGRAPH_DIRECTED);
 	prev_stores = g_hash_table_new(NULL, NULL);
 	inited = 1;
