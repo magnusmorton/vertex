@@ -37,15 +37,15 @@ main()
 	link **arr = malloc(sizeof(link*) * 16);
 	link *a, *b, *c, *d, *e;
 	a = link_new(1);
+	d = link_new(4);
+	arr[0] = a;
+	arr[1] = d;
 	b = link_new(2);
 	c = link_new(3);
-	d = link_new(4);
 	e = link_new(5);
 	insert_append(d, e);
 	insert_append(a, b);
 	insert_append(a, c);
-	arr[0] = a;
-	arr[1] = d;
 	free(a);
 	free(b);
 	free(c);
