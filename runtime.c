@@ -31,13 +31,13 @@
 struct memory_node {
 	void *addr;
 	size_t extent;
+	int prev_store;
 };
 
 static int inited = 0;
 
 igraph_t mem_graph;
 
-GHashTable *prev_stores;
 GArray *root_nodes;
 
 
@@ -178,7 +178,6 @@ finish_san()
 
 	g_array_free(detected, TRUE);
 	g_array_free(root_nodes, TRUE);
-	g_hash_table_destroy(prev_stores);  
 	igraph_destroy(&mem_graph);
 	inited = 0;
 }
@@ -193,7 +192,6 @@ init_san()
 				       ROOT_CHUNK);
 	igraph_i_set_attribute_table(&igraph_cattribute_table);
 	igraph_empty(&mem_graph, 0, IGRAPH_DIRECTED);
-	prev_stores = g_hash_table_new(NULL, NULL);
 	inited = 1;
 	// realisitcally, any errors are going to be unrecoverable here
 	return 0;
@@ -220,7 +218,7 @@ mark_root(const char* label, void *ptr,
 {
 	fprintf(stderr, "ROOT at ptr %p, extent %lu, label %s, file %s:%d\n",
 		ptr, size, label, file, line);
-	struct memory_node nd = {.addr = ptr, .extent = size};
+	struct memory_node nd = {.addr = ptr, .extent = size, .prev_store = -1};
 	g_array_append_val(root_nodes, nd);
 	igraph_add_vertices(&mem_graph, 1, NULL);
 
@@ -267,13 +265,10 @@ handle_store(void *target, void *source)
 		igraph_integer_t eid;
 		igraph_get_eid(&mem_graph, &eid, ti, si, IGRAPH_DIRECTED, FALSE);
 
-		gpointer ret;
-		if (g_hash_table_lookup_extended(
-			    prev_stores, target, NULL, &ret)) {
-			gint prev_edge = GPOINTER_TO_INT(ret);
-			fprintf(stderr, "deleting edge %d\n", prev_edge);
-			igraph_delete_edges(&mem_graph, igraph_ess_1(prev_edge));
+		if (target_node->prev_store >= 0) {
+			fprintf(stderr, "deleting edge %d\n", target_node->prev_store);
+			igraph_delete_edges(&mem_graph, igraph_ess_1(target_node->prev_store));
 		}
-		g_hash_table_insert(prev_stores,  target, GINT_TO_POINTER(eid));
+		target_node->prev_store = eid;
 	}
 }
