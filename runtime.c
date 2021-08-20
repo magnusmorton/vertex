@@ -32,6 +32,7 @@ struct memory_node {
 	void *addr;
 	size_t extent;
 	int prev_store;
+	GList *slots;
 };
 
 static int inited = 0;
@@ -56,6 +57,14 @@ detect_from_component(igraph_t *subgraph)
 	Detected ret = MAYBE;
 	printf("size: %d\n", size);
 
+	for (int i = 0; i < size; i++) {
+		struct memory_node *vnode = &g_array_index(root_nodes, struct memory_node, i);
+		GList *l;
+		for (l = vnode->slots; l != NULL; l = l->next ) {
+			fprintf(stderr, "offset: %d, ", GPOINTER_TO_INT(l->data));
+		}
+		fprintf(stderr, "\n");
+	}
 	/* Detect data structures inefficiently for now. Fuse loops later */
 	if (size == 1) {
 		ret = ARRAY;
@@ -218,7 +227,8 @@ mark_root(const char* label, void *ptr,
 {
 	fprintf(stderr, "ROOT at ptr %p, extent %lu, label %s, file %s:%d\n",
 		ptr, size, label, file, line);
-	struct memory_node nd = {.addr = ptr, .extent = size, .prev_store = -1};
+
+	struct memory_node nd = {.addr = ptr, .extent = size, .prev_store = -1, .slots = NULL};
 	g_array_append_val(root_nodes, nd);
 	igraph_add_vertices(&mem_graph, 1, NULL);
 
@@ -257,7 +267,11 @@ handle_store(void *target, void *source)
 							struct memory_node,
 							ti);
 
+		struct memory_node *stored_node = &g_array_index(root_nodes,
+							struct memory_node,
+							si);
 		long offset = target - target_node->addr;
+		target_node->slots = g_list_append(target_node->slots, GINT_TO_POINTER(offset));
 		fprintf(stderr, "offset: %ld\n", offset);
 
 		/* add edges in reverse order so first alloc is root */
