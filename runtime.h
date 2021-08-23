@@ -1,6 +1,5 @@
 #include <stdlib.h>
 
-#include <gmodule.h>
 
 typedef enum Detected {
   LL,
@@ -17,16 +16,37 @@ struct DataType {
 	struct DataType *inner;
 };
 
+#ifdef __cplusplus
+extern "C"
+#endif
+Detected* get_detected();
 
-GArray* get_detected();
-
+#ifdef __cplusplus
+extern "C"
+#endif
 void mark_root(const char *, void *, size_t, const char *, unsigned);
 
+#ifdef __cplusplus
+extern "C"
+#endif
 void check_ptr(void *, const char *, unsigned);
 
+#ifdef __cplusplus
+extern "C"
+#endif
 void handle_store(void *, void *);
 
+#ifdef __cplusplus
+extern "C"
+#endif
 int init_san();
+
+#ifdef __cplusplus
+extern "C"
+#endif
 void finish_san();
 
+#ifdef __cplusplus
+extern "C"
+#endif
 enum Detected detectedDataStructures();
