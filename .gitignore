@@ -6,3 +6,5 @@ VertexConfig.h
 *.o
 graph.dot
 graph.png
+tags
+cscope.out
