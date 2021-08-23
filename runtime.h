@@ -19,7 +19,7 @@ struct DataType {
 #ifdef __cplusplus
 extern "C"
 #endif
-Detected* get_detected();
+size_t get_detected(Detected**);
 
 #ifdef __cplusplus
 extern "C"

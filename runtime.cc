@@ -29,7 +29,7 @@
 #define ROOT_CHUNK 512
 
 struct memory_node {
-  void *addr;
+  char *addr;
   size_t extent;
   int prev_store;
   GList *slots;
@@ -114,7 +114,7 @@ Detected detect_from_component(igraph_t *subgraph) {
   return ret;
 }
 
-Detected *get_detected() {
+size_t get_detected(Detected **out) {
 
   /**
     separate connected commponents are obviously separate data structures
@@ -126,15 +126,15 @@ Detected *get_detected() {
 
   size_t ccs = igraph_vector_ptr_size(&components);
 
-  Detected *out = new Detected[ccs];
+  *out = new Detected[ccs];
   for (int i = 0; i < ccs; i++){
-    Detected ds_type = detect_from_component(VECTOR(components)[i]);
-    out[i] = ds_type;
+    Detected ds_type = detect_from_component(static_cast<igraph_t*>(VECTOR(components)[i]));
+    *out[i] = ds_type;
   }
   igraph_decompose_destroy(&components);
   igraph_vector_ptr_destroy(&components);
-
-  return out;
+        
+  return ccs;
 }
 
 void decode_enum(Detected type, char *str) {
@@ -163,19 +163,20 @@ void decode_enum(Detected type, char *str) {
 void finish_san() {
   if (!inited)
     return;
-  GArray *detected = get_detected();
-  fprintf(stderr, "number of datastructures: %d\n", detected->len);
+  Detected *detected;
+  size_t len = get_detected(&detected);
+  fprintf(stderr, "number of datastructures: %lu\n", len);
 
   char out[16];
-  for (int i = 0; i < detected->len; i++) {
-    decode_enum(g_array_index(detected, Detected,i), out);
+  for (int i = 0; i < len; i++) {
+    decode_enum(detected[i], out);
     fprintf(stderr, "Data structure %d: %s\n", i, out);
   }
   FILE *f = fopen("graph.dot", "w");
   igraph_write_graph_dot(&mem_graph, f);
   fclose(f);
 
-  g_array_free(detected, TRUE);
+  delete detected;
   g_array_free(root_nodes, TRUE);
   igraph_destroy(&mem_graph);
   inited = 0;
@@ -212,13 +213,13 @@ void mark_root(const char* label, void *ptr,
   fprintf(stderr, "ROOT at ptr %p, extent %lu, label %s, file %s:%d\n",
       ptr, size, label, file, line);
 
-  struct memory_node nd = {.addr = ptr, .extent = size, .prev_store = -1, .slots = NULL};
+  struct memory_node nd = {.addr = static_cast<char*>(ptr), .extent = size, .prev_store = -1, .slots = NULL};
   g_array_append_val(root_nodes, nd);
   igraph_add_vertices(&mem_graph, 1, NULL);
 
 }
 
-void check_ptr(void *ptr, const char *file, unsigned line {
+void check_ptr(void *ptr, const char *file, unsigned line) {
   unsigned count = 0;
   for (unsigned long i = 0; i < root_nodes->len; i++) {
     struct memory_node *nd = &g_array_index(root_nodes,
@@ -234,8 +235,10 @@ void check_ptr(void *ptr, const char *file, unsigned line {
     fprintf(stderr, "\tprobable indirection\n"); 
 }
 
-void handle_store(void *target, void *source) {
+void handle_store(void *vtarget, void *vsource) {
   unsigned long ti, si;
+  char *target = static_cast<char*>(vtarget);
+  char *source = static_cast<char*>(vsource);
   int t_found = search_roots(target, &ti);
   int s_found = search_roots(source, &si);
 
