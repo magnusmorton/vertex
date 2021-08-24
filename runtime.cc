@@ -16,6 +16,10 @@
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
    */
 
+#include <algorithm>
+#include <optional>
+#include <vector>
+
 #include <assert.h>
 #include <limits.h>
 #include <stdio.h>
@@ -39,7 +43,7 @@ static int inited = 0;
 
 igraph_t mem_graph;
 
-GArray *root_nodes;
+std::vector<memory_node> root_nodes;
 
 
 Detected detect_from_component(igraph_t *subgraph) {
@@ -56,9 +60,9 @@ Detected detect_from_component(igraph_t *subgraph) {
   printf("size: %d\n", size);
 
   for (int i = 0; i < size; i++) {
-    struct memory_node *vnode = &g_array_index(root_nodes, struct memory_node, i);
+    struct memory_node vnode = root_nodes[i];
     GList *l;
-    for (l = vnode->slots; l != NULL; l = l->next ) {
+    for (l = vnode.slots; l != NULL; l = l->next ) {
       fprintf(stderr, "offset: %d, ", GPOINTER_TO_INT(l->data));
     }
     fprintf(stderr, "\n");
@@ -177,7 +181,6 @@ void finish_san() {
   fclose(f);
 
   delete detected;
-  g_array_free(root_nodes, TRUE);
   igraph_destroy(&mem_graph);
   inited = 0;
 }
@@ -186,8 +189,6 @@ int init_san() {
   if (inited)
     return 1;
   fprintf(stderr, "initing runtime....\n");
-  root_nodes = g_array_sized_new(FALSE, FALSE, sizeof(struct memory_node),
-      ROOT_CHUNK);
   igraph_i_set_attribute_table(&igraph_cattribute_table);
   igraph_empty(&mem_graph, 0, IGRAPH_DIRECTED);
   inited = 1;
@@ -196,16 +197,29 @@ int init_san() {
 
 }
 
-int search_roots(void *addr, unsigned long *index) {
-  for (size_t i = 0; i < root_nodes->len; i++) {
-    struct memory_node *mem = &g_array_index(root_nodes,
-        struct memory_node, i);
-    if (addr >= mem->addr && addr < mem->addr + mem->extent ) {
-      *index = i;
-      return 1;
+/* int search_roots(void *addr, unsigned long *index) { */
+/*   for (size_t i = 0; i < root_nodes->len; i++) { */
+/*     struct memory_node *mem = &g_array_index(root_nodes, */
+/*         struct memory_node, i); */
+/*     if (addr >= mem->addr && addr < mem->addr + mem->extent ) { */
+/*       *index = i; */
+/*       return 1; */
+/*     } */
+/*   } */
+/*   return 0; */
+/* } */
+
+std::optional<memory_node> search_roots(char *addr) {
+  for (auto node : root_nodes) {
+    if (addr >= node.addr && addr < node.addr + node.extent) {
+      return std::optional<memory_node>(node);
     }
   }
-  return 0;
+  return std::optional<memory_node>();
+}
+
+bool match_root(char *addr, memory_node &node) {
+  return addr >= node.addr && addr < node.addr + node.extent;
 }
 
 void mark_root(const char* label, void *ptr,
@@ -214,47 +228,40 @@ void mark_root(const char* label, void *ptr,
       ptr, size, label, file, line);
 
   struct memory_node nd = {.addr = static_cast<char*>(ptr), .extent = size, .prev_store = -1, .slots = NULL};
-  g_array_append_val(root_nodes, nd);
+  root_nodes.push_back(nd);;
   igraph_add_vertices(&mem_graph, 1, NULL);
 
 }
 
 void check_ptr(void *ptr, const char *file, unsigned line) {
-  unsigned count = 0;
-  for (unsigned long i = 0; i < root_nodes->len; i++) {
-    struct memory_node *nd = &g_array_index(root_nodes,
-        struct memory_node, i);
-    if (ptr >= nd->addr && ptr < nd->addr + nd->extent) {
-
-      fprintf(stderr, "ptr %p (%s:%d) belongs to root %p\n",
-          ptr, file, line, nd->addr);
-      count++;
-    }
+  auto it = std::find_if(root_nodes.begin(), root_nodes.end(),
+                         [=](memory_node n) { return match_root(static_cast<char*>(ptr), n); });
+  
+  if (it != root_nodes.end()) {
+    fprintf(stderr, "ptr %p (%s:%d) belongs to root %p\n",
+      ptr, file, line, (*it).addr);
   }
-  if (count > 1)
-    fprintf(stderr, "\tprobable indirection\n"); 
 }
 
 void handle_store(void *vtarget, void *vsource) {
   unsigned long ti, si;
   char *target = static_cast<char*>(vtarget);
   char *source = static_cast<char*>(vsource);
-  int t_found = search_roots(target, &ti);
-  int s_found = search_roots(source, &si);
-
-  if (t_found && s_found ) {
+  auto t_found = std::find_if(root_nodes.begin(), root_nodes.end(), [=](memory_node n) { return match_root(target,n);});
+  auto s_found = std::find_if(root_nodes.begin(), root_nodes.end(), [=](memory_node n) { return match_root(source,n);});
+  
+  auto end = std::end(root_nodes);
+  if (t_found != end && s_found != end ) {
+    ti = t_found - root_nodes.begin();
+    si = s_found - root_nodes.begin();
     fprintf(stderr, "handling store..... %p into %p\n", source, target);
     fprintf(stderr, "adding edge from %ld to %ld\n", ti, si);
 
-    struct memory_node *target_node = &g_array_index(root_nodes, 
-        struct memory_node,
-        ti);
+    memory_node target_node = *t_found; 
+    memory_node stored_node = *s_found; 
 
-    struct memory_node *stored_node = &g_array_index(root_nodes,
-        struct memory_node,
-        si);
-    long offset = target - target_node->addr;
-    target_node->slots = g_list_append(target_node->slots, GINT_TO_POINTER(offset));
+    long offset = target - target_node.addr;
+    target_node.slots = g_list_append(target_node.slots, GINT_TO_POINTER(offset));
     fprintf(stderr, "offset: %ld\n", offset);
 
     /* add edges in reverse order so first alloc is root */
@@ -262,10 +269,10 @@ void handle_store(void *vtarget, void *vsource) {
     igraph_integer_t eid;
     igraph_get_eid(&mem_graph, &eid, ti, si, IGRAPH_DIRECTED, FALSE);
 
-    if (target_node->prev_store >= 0) {
-      fprintf(stderr, "deleting edge %d\n", target_node->prev_store);
-      igraph_delete_edges(&mem_graph, igraph_ess_1(target_node->prev_store));
+    if (target_node.prev_store >= 0) {
+      fprintf(stderr, "deleting edge %d\n", target_node.prev_store);
+      igraph_delete_edges(&mem_graph, igraph_ess_1(target_node.prev_store));
     }
-    target_node->prev_store = eid;
+    target_node.prev_store = eid;
   }
 }
