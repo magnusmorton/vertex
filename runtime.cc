@@ -17,6 +17,7 @@
    */
 
 #include <algorithm>
+#include <iostream>
 #include <optional>
 #include <vector>
 
@@ -257,8 +258,8 @@ void handle_store(void *vtarget, void *vsource) {
     fprintf(stderr, "handling store..... %p into %p\n", source, target);
     fprintf(stderr, "adding edge from %ld to %ld\n", ti, si);
 
-    memory_node target_node = *t_found; 
-    memory_node stored_node = *s_found; 
+    memory_node& target_node = *t_found;
+    memory_node& stored_node = *s_found;
 
     long offset = target - target_node.addr;
     target_node.slots = g_list_append(target_node.slots, GINT_TO_POINTER(offset));
@@ -268,6 +269,9 @@ void handle_store(void *vtarget, void *vsource) {
     igraph_add_edge(&mem_graph, ti, si);
     igraph_integer_t eid;
     igraph_get_eid(&mem_graph, &eid, ti, si, IGRAPH_DIRECTED, FALSE);
+
+		std::cerr << "eid: " << eid << std::endl;
+		std::cerr << "prev store: " << target_node.prev_store << std::endl;
 
     if (target_node.prev_store >= 0) {
       fprintf(stderr, "deleting edge %d\n", target_node.prev_store);
