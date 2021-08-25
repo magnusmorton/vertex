@@ -31,7 +31,7 @@ add_library(MemPass MODULE
 add_library(runtime SHARED
   runtime.cc
   )
-target_link_libraries(runtime PkgConfig::IGRAPH PkgConfig::GLIB)
+target_link_libraries(runtime PkgConfig::IGRAPH)
 set_target_properties(runtime PROPERTIES
     COMPILE_FLAGS "-g -Wall"
 )
