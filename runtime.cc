@@ -189,7 +189,7 @@ int init_san() {
   if (inited)
     return 1;
   fprintf(stderr, "initing runtime....\n");
-  igraph_i_set_attribute_table(&igraph_cattribute_table);
+  igraph_set_attribute_table(&igraph_cattribute_table);
   igraph_empty(&mem_graph, 0, IGRAPH_DIRECTED);
   inited = 1;
   // realisitcally, any errors are going to be unrecoverable here
