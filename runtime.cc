@@ -220,7 +220,7 @@ void check_ptr(void *ptr, const char *file, unsigned line) {
   
   if (it != root_nodes.end()) {
     fprintf(stderr, "ptr %p (%s:%d) belongs to root %p\n",
-      ptr, file, line, (*it).addr);
+      ptr, file, line, it->addr);
   }
 }
 
