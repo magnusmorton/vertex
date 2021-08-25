@@ -18,7 +18,6 @@
 
 #include <algorithm>
 #include <iostream>
-#include <optional>
 #include <vector>
 
 #include <assert.h>
@@ -198,26 +197,6 @@ int init_san() {
 
 }
 
-/* int search_roots(void *addr, unsigned long *index) { */
-/*   for (size_t i = 0; i < root_nodes->len; i++) { */
-/*     struct memory_node *mem = &g_array_index(root_nodes, */
-/*         struct memory_node, i); */
-/*     if (addr >= mem->addr && addr < mem->addr + mem->extent ) { */
-/*       *index = i; */
-/*       return 1; */
-/*     } */
-/*   } */
-/*   return 0; */
-/* } */
-
-std::optional<memory_node> search_roots(char *addr) {
-  for (auto node : root_nodes) {
-    if (addr >= node.addr && addr < node.addr + node.extent) {
-      return std::optional<memory_node>(node);
-    }
-  }
-  return std::optional<memory_node>();
-}
 
 bool match_root(char *addr, memory_node &node) {
   return addr >= node.addr && addr < node.addr + node.extent;
