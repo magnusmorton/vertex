@@ -18,6 +18,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <map>
 #include <vector>
 
 #include <assert.h>
@@ -25,7 +26,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <gmodule.h>
 #include <igraph/igraph.h>
 
 #include "runtime.h"
@@ -35,8 +35,10 @@
 struct memory_node {
   char *addr;
   size_t extent;
-  int prev_store;
-  GList *slots;
+  std::map<unsigned long, int> slots;
+
+  memory_node(char *a, size_t ex) : addr(a), extent(ex)
+  {}
 };
 
 static int inited = 0;
@@ -207,7 +209,7 @@ void mark_root(const char* label, void *ptr,
   fprintf(stderr, "ROOT at ptr %p, extent %lu, label %s, file %s:%d\n",
       ptr, size, label, file, line);
 
-  struct memory_node nd = {.addr = static_cast<char*>(ptr), .extent = size, .prev_store = -1, .slots = NULL};
+  memory_node nd(static_cast<char*>(ptr), size); 
   root_nodes.push_back(nd);;
   igraph_add_vertices(&mem_graph, 1, NULL);
 
@@ -241,22 +243,22 @@ void handle_store(void *vtarget, void *vsource) {
     memory_node& stored_node = *s_found;
 
     long offset = target - target_node.addr;
-    target_node.slots = g_list_append(target_node.slots, GINT_TO_POINTER(offset));
     fprintf(stderr, "offset: %ld\n", offset);
+
 
     /* add edges in reverse order so first alloc is root */
     igraph_add_edge(&mem_graph, ti, si);
     igraph_integer_t eid;
-    igraph_get_eid(&mem_graph, &eid, ti, si, IGRAPH_DIRECTED, FALSE);
+    igraph_get_eid(&mem_graph, &eid, ti, si, IGRAPH_DIRECTED, 0);
 
 		std::cerr << "eid: " << eid << std::endl;
-		std::cerr << "prev store: " << target_node.prev_store << std::endl;
 
-    // TODO: how did this ever work?
-    if (target_node.prev_store >= 0) {
-      fprintf(stderr, "deleting edge %d\n", target_node.prev_store);
-      igraph_delete_edges(&mem_graph, igraph_ess_1(target_node.prev_store));
+    auto it = target_node.slots.find(offset);
+    if (it != target_node.slots.end()) {
+      igraph_integer_t prev_store = it->second;
+      fprintf(stderr, "deleting edge %d\n", prev_store);
+      igraph_delete_edges(&mem_graph, igraph_ess_1(prev_store));
     }
-    target_node.prev_store = eid;
+    target_node.slots[offset] = eid;
   }
 }
