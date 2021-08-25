@@ -273,6 +273,7 @@ void handle_store(void *vtarget, void *vsource) {
 		std::cerr << "eid: " << eid << std::endl;
 		std::cerr << "prev store: " << target_node.prev_store << std::endl;
 
+    // TODO: how did this ever work?
     if (target_node.prev_store >= 0) {
       fprintf(stderr, "deleting edge %d\n", target_node.prev_store);
       igraph_delete_edges(&mem_graph, igraph_ess_1(target_node.prev_store));
