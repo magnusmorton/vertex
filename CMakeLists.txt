@@ -43,7 +43,7 @@ foreach ( sourcefile ${EXAMPLES} )
   add_executable( ${exname} ${sourcefile} )
   target_link_libraries( ${exname} runtime PkgConfig::IGRAPH )
   set_target_properties( ${exname} PROPERTIES
-    COMPILE_FLAGS "-O1 -g -Wall -fexperimental-new-pass-manager  -fpass-plugin=./libMemPass.so")
+    COMPILE_FLAGS "-O1 -g -Wall -fexperimental-new-pass-manager -fpass-plugin=./libMemPass.so")
   add_dependencies( ${exname} MemPass )
 endforeach ( sourcefile ${EXAMPLES} )
 
