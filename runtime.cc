@@ -59,14 +59,14 @@ Detected detect_from_component(igraph_t *subgraph) {
   Detected ret = MAYBE;
   printf("size: %d\n", size);
 
-  for (int i = 0; i < size; i++) {
-    struct memory_node vnode = root_nodes[i];
-    GList *l;
-    for (l = vnode.slots; l != NULL; l = l->next ) {
-      fprintf(stderr, "offset: %d, ", GPOINTER_TO_INT(l->data));
-    }
-    fprintf(stderr, "\n");
-  }
+  // TODO: convert to new slots
+  /* for (int i = 0; i < size; i++) { */
+  /*   struct memory_node vnode = root_nodes[i]; */
+  /*   for (l = vnode.slots; l != NULL; l = l->next ) { */
+  /*     fprintf(stderr, "offset: %d, ", GPOINTER_TO_INT(l->data)); */
+  /*   } */
+  /*   fprintf(stderr, "\n"); */
+  /* } */
   /* Detect data structures inefficiently for now. Fuse loops later */
   if (size == 1) {
     ret = ARRAY;
