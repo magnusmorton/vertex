@@ -181,7 +181,7 @@ void finish_san() {
   igraph_write_graph_dot(&mem_graph, f);
   fclose(f);
 
-  delete detected;
+  delete[] detected;
   igraph_destroy(&mem_graph);
   inited = 0;
 }
