@@ -21,6 +21,8 @@
 #include <map>
 #include <vector>
 
+#include <boost/graph/adjacency_list.hpp>
+
 #include <assert.h>
 #include <limits.h>
 #include <stdio.h>
