@@ -131,7 +131,7 @@ size_t get_detected(Detected **out) {
 
   size_t ccs = igraph_vector_ptr_size(&components);
 
-  *out = new Detected[ccs];
+  *out = static_cast<Detected*>(malloc(sizeof(Detected) * ccs));
   for (int i = 0; i < ccs; i++){
     Detected ds_type = detect_from_component(static_cast<igraph_t*>(VECTOR(components)[i]));
     *out[i] = ds_type;
@@ -181,7 +181,7 @@ void finish_san() {
   igraph_write_graph_dot(&mem_graph, f);
   fclose(f);
 
-  delete[] detected;
+  free(detected);
   igraph_destroy(&mem_graph);
   inited = 0;
 }
