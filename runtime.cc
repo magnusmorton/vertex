@@ -239,7 +239,6 @@ void handle_store(void *vtarget, void *vsource) {
     fprintf(stderr, "adding edge from %ld to %ld\n", ti, si);
 
     memory_node& target_node = *t_found;
-    memory_node& stored_node = *s_found;
 
     long offset = target - target_node.addr;
     fprintf(stderr, "offset: %ld\n", offset);
