@@ -22,7 +22,9 @@
 #include <vector>
 
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/connected_components.hpp>
 #include <boost/graph/graphviz.hpp>
+#include <boost/graph/strong_components.hpp>
 
 #include <assert.h>
 #include <limits.h>
@@ -35,11 +37,22 @@
 
 #define ROOT_CHUNK 512
 
+struct vertex_property {
+  int component;
+};
+
+struct edge_property {
+};
+
+struct graph_property {
+  unsigned number_of_components;
+};
 
 static int inited = 0;
 
 igraph_t mem_graph;
-typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS> MemGraph;
+typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS,
+                              vertex_property> MemGraph;
 std::vector<MemGraph::vertex_descriptor> vds;
 MemGraph _graph;
 
@@ -126,6 +139,29 @@ Detected detect_from_component(igraph_t *subgraph) {
   return ret;
 }
 
+unsigned weak_components(MemGraph &graph, const std::vector<int> &components ) {
+  std::vector<MemGraph::edge_descriptor> temp_edges;
+  std::vector<int> _temp(boost::num_vertices(graph));
+  auto edges = boost::edges(graph);
+  for (auto it = edges.first; it != edges.second; ++it) {
+    auto pair = boost::add_edge(boost::target(*it, graph),
+                                boost::source(*it, graph),
+                                graph);
+    temp_edges.push_back(pair.first);
+  }
+
+  unsigned number_of_components = 
+      boost::strong_components(graph, 
+                               boost::get(&vertex_property::component, graph));
+
+  for (const auto & e : temp_edges) {
+    boost::remove_edge(e, graph);
+  }    
+  return number_of_components;
+}
+
+
+
 size_t get_detected(Detected **out) {
 
   /**
@@ -135,7 +171,9 @@ size_t get_detected(Detected **out) {
   igraph_vector_ptr_init(&components, 1);
 
   igraph_decompose(&mem_graph, &components, IGRAPH_WEAK, -1, 1);
-
+  std::vector<int> component(boost::num_vertices(_graph));
+  unsigned num_components = weak_components(_graph, component);
+  std::cerr << "BOOST num components: " << num_components << std::endl;
   size_t ccs = igraph_vector_ptr_size(&components);
 
   *out = static_cast<Detected*>(malloc(sizeof(Detected) * ccs));
