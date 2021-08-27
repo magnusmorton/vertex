@@ -22,6 +22,7 @@
 #include <vector>
 
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/graphviz.hpp>
 
 #include <assert.h>
 #include <limits.h>
@@ -34,18 +35,22 @@
 
 #define ROOT_CHUNK 512
 
-struct memory_node {
-  char *addr;
-  size_t extent;
-  std::map<unsigned long, int> slots;
-
-  memory_node(char *a, size_t ex) : addr(a), extent(ex)
-  {}
-};
 
 static int inited = 0;
 
 igraph_t mem_graph;
+typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS> MemGraph;
+std::vector<MemGraph::vertex_descriptor> vds;
+MemGraph _graph;
+
+struct memory_node {
+  char *addr;
+  size_t extent;
+  std::map<unsigned long, int> slots;
+  std::map<unsigned long, MemGraph::edge_descriptor> _slots;
+  memory_node(char *a, size_t ex) : addr(a), extent(ex)
+  {}
+};
 
 std::vector<memory_node> root_nodes;
 
@@ -179,9 +184,11 @@ void finish_san() {
     decode_enum(detected[i], out);
     fprintf(stderr, "Data structure %d: %s\n", i, out);
   }
-  FILE *f = fopen("graph.dot", "w");
-  igraph_write_graph_dot(&mem_graph, f);
-  fclose(f);
+
+  std::ofstream file;
+  file.open("graph.dot");
+  boost::write_graphviz(file, _graph);
+  file.close();
 
   free(detected);
   igraph_destroy(&mem_graph);
@@ -192,6 +199,7 @@ int init_san() {
   if (inited)
     return 1;
   fprintf(stderr, "initing runtime....\n");
+
   igraph_set_attribute_table(&igraph_cattribute_table);
   igraph_empty(&mem_graph, 0, IGRAPH_DIRECTED);
   inited = 1;
@@ -213,6 +221,7 @@ void mark_root(const char* label, void *ptr,
   memory_node nd(static_cast<char*>(ptr), size); 
   root_nodes.push_back(nd);;
   igraph_add_vertices(&mem_graph, 1, NULL);
+  vds.push_back(boost::add_vertex(_graph));
 
 }
 
@@ -250,6 +259,7 @@ void handle_store(void *vtarget, void *vsource) {
     igraph_add_edge(&mem_graph, ti, si);
     igraph_integer_t eid;
     igraph_get_eid(&mem_graph, &eid, ti, si, IGRAPH_DIRECTED, 0);
+    auto[edge, added] = boost::add_edge(vds[ti], vds[si], _graph);
 
 		std::cerr << "eid: " << eid << std::endl;
 
@@ -259,6 +269,13 @@ void handle_store(void *vtarget, void *vsource) {
       fprintf(stderr, "deleting edge %d\n", prev_store);
       igraph_delete_edges(&mem_graph, igraph_ess_1(prev_store));
     }
+    auto _it = target_node._slots.find(offset);
+    if (_it != target_node._slots.end()) {
+      MemGraph::edge_descriptor prev_store = _it->second;
+      std::cerr << "deleting bgl edge: " << prev_store << std::endl;
+      boost::remove_edge(prev_store, _graph);
+    }
     target_node.slots[offset] = eid;
+    target_node._slots[offset] = edge;
   }
 }
