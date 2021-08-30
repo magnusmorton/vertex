@@ -24,7 +24,6 @@
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/connected_components.hpp>
 #include <boost/graph/graphviz.hpp>
-#include <boost/graph/strong_components.hpp>
 
 #include <assert.h>
 #include <limits.h>
@@ -51,7 +50,7 @@ struct graph_property {
 static int inited = 0;
 
 igraph_t mem_graph;
-typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS,
+typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
                               vertex_property> MemGraph;
 std::vector<MemGraph::vertex_descriptor> vds;
 MemGraph _graph;
@@ -68,7 +67,7 @@ struct memory_node {
 std::vector<memory_node> root_nodes;
 
 
-Detected detect_from_component(igraph_t *subgraph) {
+Detected _detect_from_component(igraph_t *subgraph) {
   igraph_vector_t in_degree, out_degree;
   igraph_vector_init(&in_degree, 1);
   igraph_vector_init(&out_degree, 1);
@@ -139,24 +138,64 @@ Detected detect_from_component(igraph_t *subgraph) {
   return ret;
 }
 
-unsigned weak_components(MemGraph &graph, const std::vector<int> &components ) {
-  std::vector<MemGraph::edge_descriptor> temp_edges;
-  std::vector<int> _temp(boost::num_vertices(graph));
-  auto edges = boost::edges(graph);
-  for (auto it = edges.first; it != edges.second; ++it) {
-    auto pair = boost::add_edge(boost::target(*it, graph),
-                                boost::source(*it, graph),
-                                graph);
-    temp_edges.push_back(pair.first);
+Detected detect_from_component(std::vector<MemGraph::vertex_descriptor> &subgraph) {
+  Detected ret = MAYBE;
+  
+  std::cerr << "size: " << subgraph.size() << std::endl;
+  
+  // TODO: something slots
+  
+  if (subgraph.size() == 1) {
+    ret = ARRAY;
   }
+  else {
+    // TODO: make is_tree. or do we care?
+    ret = TREE;
 
+    // single LL
+    bool is_ll = true;
+    for (auto vd : subgraph) {
+      unsigned in = boost::in_degree(vd, _graph);
+      unsigned out = boost::out_degree(vd, _graph);
+
+      std::cerr << "in: " << in << " out " << out << " i: " << vd << std::endl;
+      if (in > 1 || out > 1) {
+        is_ll = false;
+        break;
+      }
+    }
+    if (is_ll)
+      ret = LL;
+
+    bool is_dll = true;
+    // TODO: fuse with above loop
+    for (unsigned i = 0; i < subgraph.size(); ++i) {
+      MemGraph::vertex_descriptor vd = subgraph[i];
+      unsigned in = boost::in_degree(vd, _graph);
+      unsigned out = boost::out_degree(vd, _graph);
+      if (in != 2 || out != 2) {
+        std::cerr << "not 2" << std::endl;
+        if (in != 1 || out != 1) {
+          if (i != 0 || i != subgraph.size()) {
+            is_dll = false;
+            break;
+          }
+        }
+      }
+    }
+    if (is_dll)
+      ret = DOUBLE_LL;
+  }
+  return ret;
+}
+
+unsigned weak_components(MemGraph &graph) {
+  std::cerr << "WEAK COMPONENTS" << std::endl;
+  // connected components seems to work as is for bidirectionalS graph
   unsigned number_of_components = 
-      boost::strong_components(graph, 
+      boost::connected_components(graph, 
                                boost::get(&vertex_property::component, graph));
 
-  for (const auto & e : temp_edges) {
-    boost::remove_edge(e, graph);
-  }    
   return number_of_components;
 }
 
@@ -167,32 +206,21 @@ size_t get_detected(Detected **out) {
   /**
     separate connected commponents are obviously separate data structures
    **/
-  igraph_vector_ptr_t components;
-  igraph_vector_ptr_init(&components, 1);
 
-
-  igraph_decompose(&mem_graph, &components, IGRAPH_WEAK, -1, 1);
-  std::vector<int> component(boost::num_vertices(_graph));
-  unsigned num_components = weak_components(_graph, component);
-  std::cerr << "BOOST num components: " << num_components << std::endl;
-  size_t ccs = igraph_vector_ptr_size(&components);
-
+  unsigned num_components = weak_components(_graph);
   
-  std::vector<std::vector<MemGraph::vertex_descriptor>> _components(num_components);
+  std::vector<std::vector<MemGraph::vertex_descriptor>> components(num_components);
   for (auto vd : boost::make_iterator_range(vertices(_graph))) {
-    std::cerr << "bleh: " << _graph[vd].component << std::endl;
-    _components[_graph[vd].component].push_back(vd);
+    components[_graph[vd].component].push_back(vd);
   }
 
-  *out = static_cast<Detected*>(malloc(sizeof(Detected) * ccs));
-  for (int i = 0; i < ccs; i++){
-    Detected ds_type = detect_from_component(static_cast<igraph_t*>(VECTOR(components)[i]));
-    *out[i] = ds_type;
+  *out = static_cast<Detected*>(malloc(sizeof(Detected) * num_components));
+  for (auto it = components.begin(); it != components.end(); ++it){
+    Detected ds_type = detect_from_component(*it);
+    *out[it - components.begin()] = ds_type;
   }
-  igraph_decompose_destroy(&components);
-  igraph_vector_ptr_destroy(&components);
-        
-  return ccs;
+
+  return num_components;
 }
 
 void decode_enum(Detected type, char *str) {
