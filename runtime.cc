@@ -30,8 +30,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <igraph/igraph.h>
-
 #include "runtime.h"
 
 #define ROOT_CHUNK 512
@@ -49,7 +47,6 @@ struct graph_property {
 
 static int inited = 0;
 
-igraph_t mem_graph;
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
                               vertex_property> MemGraph;
 std::vector<MemGraph::vertex_descriptor> vds;
@@ -66,77 +63,6 @@ struct memory_node {
 
 std::vector<memory_node> root_nodes;
 
-
-Detected _detect_from_component(igraph_t *subgraph) {
-  igraph_vector_t in_degree, out_degree;
-  igraph_vector_init(&in_degree, 1);
-  igraph_vector_init(&out_degree, 1);
-
-  igraph_vs_t vertices;
-  igraph_vs_all(&vertices);
-
-  igraph_integer_t size;
-  igraph_vs_size(subgraph, &vertices, &size);
-  Detected ret = MAYBE;
-  printf("size: %d\n", size);
-
-  for (const auto& vnode : root_nodes) {
-    for (const auto& slot_el: vnode.slots) {
-      std::cerr << "offset: " << slot_el.first << ", ";
-    }
-    std::cerr << std::endl;
-  }
-
-  /* Detect data structures inefficiently for now. Fuse loops later */
-  if (size == 1) {
-    ret = ARRAY;
-  }
-  else {
-    int is_tree = 0;
-    igraph_is_tree(subgraph, &is_tree, NULL, IGRAPH_ALL);
-    if (is_tree) {
-      ret = TREE;
-    }
-
-    igraph_degree(subgraph, &in_degree, vertices, IGRAPH_IN, 1);
-    igraph_degree(subgraph, &out_degree, vertices, IGRAPH_OUT, 1);
-
-    /* try detecting single LL */
-    int is_ll = 1;
-    for (int i = 0; i < size; i++) {
-      int in, out;
-      in = VECTOR(in_degree)[i];
-      out = VECTOR(out_degree)[i];
-      if (in > 1 || out > 1) {
-        is_ll = 0;
-        break;
-      }
-    }
-    if (is_ll)
-      ret = LL;
-    int is_dll = 1;
-    for (int i = 0; i < size; i++) {
-      int in, out;
-      in = VECTOR(in_degree)[i];
-      out = VECTOR(out_degree)[i];
-      printf("in: %d out: %d i: %d\n", in, out, i);
-      if (in != 1 || out != 1 ) {
-        if ((!out && !i) || (!in && i != size)) {
-          is_dll = 0;
-          break;
-        }
-      }
-    }
-    if (is_dll) {
-      ret = DOUBLE_LL;
-    }
-
-  }
-
-  igraph_vector_destroy(&in_degree);
-  igraph_vector_destroy(&out_degree);
-  return ret;
-}
 
 Detected detect_from_component(std::vector<MemGraph::vertex_descriptor> &subgraph) {
   Detected ret = MAYBE;
@@ -265,7 +191,6 @@ void finish_san() {
   file.close();
 
   free(detected);
-  igraph_destroy(&mem_graph);
   inited = 0;
 }
 
@@ -274,8 +199,6 @@ int init_san() {
     return 1;
   fprintf(stderr, "initing runtime....\n");
 
-  igraph_set_attribute_table(&igraph_cattribute_table);
-  igraph_empty(&mem_graph, 0, IGRAPH_DIRECTED);
   inited = 1;
   // realisitcally, any errors are going to be unrecoverable here
   return 0;
@@ -294,7 +217,6 @@ void mark_root(const char* label, void *ptr,
 
   memory_node nd(static_cast<char*>(ptr), size); 
   root_nodes.push_back(nd);;
-  igraph_add_vertices(&mem_graph, 1, NULL);
   vds.push_back(boost::add_vertex(_graph));
 
 }
@@ -330,26 +252,14 @@ void handle_store(void *vtarget, void *vsource) {
 
 
     /* add edges in reverse order so first alloc is root */
-    igraph_add_edge(&mem_graph, ti, si);
-    igraph_integer_t eid;
-    igraph_get_eid(&mem_graph, &eid, ti, si, IGRAPH_DIRECTED, 0);
     auto[edge, added] = boost::add_edge(vds[ti], vds[si], _graph);
 
-		std::cerr << "eid: " << eid << std::endl;
-
-    auto it = target_node.slots.find(offset);
-    if (it != target_node.slots.end()) {
-      igraph_integer_t prev_store = it->second;
-      fprintf(stderr, "deleting edge %d\n", prev_store);
-      igraph_delete_edges(&mem_graph, igraph_ess_1(prev_store));
-    }
     auto _it = target_node._slots.find(offset);
     if (_it != target_node._slots.end()) {
       MemGraph::edge_descriptor prev_store = _it->second;
       std::cerr << "deleting bgl edge: " << prev_store << std::endl;
       boost::remove_edge(prev_store, _graph);
     }
-    target_node.slots[offset] = eid;
     target_node._slots[offset] = edge;
   }
 }
