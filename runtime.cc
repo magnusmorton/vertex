@@ -170,11 +170,19 @@ size_t get_detected(Detected **out) {
   igraph_vector_ptr_t components;
   igraph_vector_ptr_init(&components, 1);
 
+
   igraph_decompose(&mem_graph, &components, IGRAPH_WEAK, -1, 1);
   std::vector<int> component(boost::num_vertices(_graph));
   unsigned num_components = weak_components(_graph, component);
   std::cerr << "BOOST num components: " << num_components << std::endl;
   size_t ccs = igraph_vector_ptr_size(&components);
+
+  
+  std::vector<std::vector<MemGraph::vertex_descriptor>> _components(num_components);
+  for (auto vd : boost::make_iterator_range(vertices(_graph))) {
+    std::cerr << "bleh: " << _graph[vd].component << std::endl;
+    _components[_graph[vd].component].push_back(vd);
+  }
 
   *out = static_cast<Detected*>(malloc(sizeof(Detected) * ccs));
   for (int i = 0; i < ccs; i++){
