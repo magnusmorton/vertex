@@ -48,13 +48,12 @@ static int inited = 0;
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
                               vertex_property> MemGraph;
 std::vector<MemGraph::vertex_descriptor> vds;
-MemGraph _graph;
+MemGraph graph;
 
 struct memory_node {
   char *addr;
   size_t extent;
-  std::map<unsigned long, int> slots;
-  std::map<unsigned long, MemGraph::edge_descriptor> _slots;
+  std::map<unsigned long, MemGraph::edge_descriptor> slots;
   memory_node(char *a, size_t ex) : addr(a), extent(ex)
   {}
 };
@@ -79,8 +78,8 @@ Detected detect_from_component(std::vector<MemGraph::vertex_descriptor> &subgrap
     // single LL
     bool is_ll = true;
     for (auto vd : subgraph) {
-      unsigned in = boost::in_degree(vd, _graph);
-      unsigned out = boost::out_degree(vd, _graph);
+      unsigned in = boost::in_degree(vd, graph);
+      unsigned out = boost::out_degree(vd, graph);
 
       std::cerr << "in: " << in << " out " << out << " i: " << vd << std::endl;
       if (in > 1 || out > 1) {
@@ -95,8 +94,8 @@ Detected detect_from_component(std::vector<MemGraph::vertex_descriptor> &subgrap
     // TODO: fuse with above loop
     for (unsigned i = 0; i < subgraph.size(); ++i) {
       MemGraph::vertex_descriptor vd = subgraph[i];
-      unsigned in = boost::in_degree(vd, _graph);
-      unsigned out = boost::out_degree(vd, _graph);
+      unsigned in = boost::in_degree(vd, graph);
+      unsigned out = boost::out_degree(vd, graph);
       if (in != 2 || out != 2) {
         std::cerr << "not 2" << std::endl;
         if (in != 1 || out != 1) {
@@ -131,11 +130,11 @@ size_t get_detected(Detected **out) {
     separate connected commponents are obviously separate data structures
    **/
 
-  unsigned num_components = weak_components(_graph);
+  unsigned num_components = weak_components(graph);
   
   std::vector<std::vector<MemGraph::vertex_descriptor>> components(num_components);
-  for (auto vd : boost::make_iterator_range(vertices(_graph))) {
-    components[_graph[vd].component].push_back(vd);
+  for (auto vd : boost::make_iterator_range(vertices(graph))) {
+    components[graph[vd].component].push_back(vd);
   }
 
   *out = static_cast<Detected*>(malloc(sizeof(Detected) * num_components));
@@ -185,7 +184,7 @@ void finish_san() {
 
   std::ofstream file;
   file.open("graph.dot");
-  boost::write_graphviz(file, _graph);
+  boost::write_graphviz(file, graph);
   file.close();
 
   free(detected);
@@ -215,7 +214,7 @@ void mark_root(const char* label, void *ptr,
 
   memory_node nd(static_cast<char*>(ptr), size); 
   root_nodes.push_back(nd);;
-  vds.push_back(boost::add_vertex(_graph));
+  vds.push_back(boost::add_vertex(graph));
 
 }
 
@@ -250,14 +249,14 @@ void handle_store(void *vtarget, void *vsource) {
 
 
     /* add edges in reverse order so first alloc is root */
-    auto[edge, added] = boost::add_edge(vds[ti], vds[si], _graph);
+    auto[edge, added] = boost::add_edge(vds[ti], vds[si], graph);
 
-    auto _it = target_node._slots.find(offset);
-    if (_it != target_node._slots.end()) {
-      MemGraph::edge_descriptor prev_store = _it->second;
+    auto it = target_node.slots.find(offset);
+    if (it != target_node.slots.end()) {
+      MemGraph::edge_descriptor prev_store = it->second;
       std::cerr << "deleting bgl edge: " << prev_store << std::endl;
-      boost::remove_edge(prev_store, _graph);
+      boost::remove_edge(prev_store, graph);
     }
-    target_node._slots[offset] = edge;
+    target_node.slots[offset] = edge;
   }
 }
