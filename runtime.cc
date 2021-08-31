@@ -43,8 +43,6 @@ struct graph_property {
   unsigned number_of_components;
 };
 
-static int inited = 0;
-
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
                               vertex_property> MemGraph;
 std::vector<MemGraph::vertex_descriptor> vds;
@@ -169,8 +167,6 @@ void decode_enum(Detected type, char *str) {
 }
 
 void finish_san() {
-  if (!inited)
-    return;
   Detected *detected;
   size_t len = get_detected(&detected);
   fprintf(stderr, "number of datastructures: %lu\n", len);
@@ -187,18 +183,6 @@ void finish_san() {
   file.close();
 
   free(detected);
-  inited = 0;
-}
-
-int init_san() {
-  if (inited)
-    return 1;
-  fprintf(stderr, "initing runtime....\n");
-
-  inited = 1;
-  // realisitcally, any errors are going to be unrecoverable here
-  return 0;
-
 }
 
 
