@@ -97,7 +97,6 @@ Detected detect_from_component(std::vector<MemGraph::vertex_descriptor> &subgrap
       unsigned in = boost::in_degree(vd, graph);
       unsigned out = boost::out_degree(vd, graph);
       if (in != 2 || out != 2) {
-        std::cerr << "not 2" << std::endl;
         if (in != 1 || out != 1) {
           if (i != 0 || i != subgraph.size()) {
             is_dll = false;
