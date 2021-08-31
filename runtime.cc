@@ -17,6 +17,8 @@
    */
 
 #include <algorithm>
+#include <cstdio>
+#include <cstdlib>
 #include <iostream>
 #include <map>
 #include <vector>
@@ -25,10 +27,6 @@
 #include <boost/graph/connected_components.hpp>
 #include <boost/graph/graphviz.hpp>
 
-#include <assert.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 #include "runtime.h"
 
