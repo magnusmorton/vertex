@@ -56,6 +56,12 @@ struct memory_node {
   {}
 };
 
+std::ostream& operator<<(std::ostream& os, memory_node& obj)
+{
+    os << "Addr: " << obj.addr << " extent: " << obj.extent << " slots: " << obj.slots.size(); 
+    return os;
+}
+
 std::vector<memory_node> root_nodes;
 
 
@@ -63,8 +69,22 @@ Detected detect_from_component(std::vector<MemGraph::vertex_descriptor> &subgrap
   Detected ret = MAYBE;
   
   std::cerr << "size: " << subgraph.size() << std::endl;
+
+  for (auto v : subgraph) {
+    std::cerr << root_nodes[v] << std::endl;
+  }
   
   // TODO: something slots
+  /* memory_node prev; */
+  for (auto v : subgraph) {
+    memory_node& n = root_nodes[v];
+    std::cerr << "slots: ";
+    for (const auto[k,v] : n.slots) {
+      std::cerr << k << " ";
+    }
+    std::cerr << std::endl;
+    /* prev = n; */
+  }
   
   if (subgraph.size() == 1) {
     ret = ARRAY;
@@ -212,6 +232,8 @@ void check_ptr(void *ptr, const char *file, unsigned line) {
 }
 
 void handle_store(void *vtarget, void *vsource) {
+  if (!vsource)
+    std::cerr << "NULL PTR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
   unsigned long ti, si;
   char *target = static_cast<char*>(vtarget);
   char *source = static_cast<char*>(vsource);
@@ -241,5 +263,8 @@ void handle_store(void *vtarget, void *vsource) {
       boost::remove_edge(prev_store, graph);
     }
     target_node.slots[offset] = edge;
+  }
+  if (t_found != end && !vsource) {
+    
   }
 }
