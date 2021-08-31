@@ -14,7 +14,7 @@
 
 using namespace llvm;
 
-FunctionCallee create_func, check_func, store_func, init_func, finish_func;
+FunctionCallee create_func, check_func, store_func, finish_func;
 
 bool debug;
 
@@ -28,11 +28,6 @@ PreservedAnalyses MemPass::run(Module &M, ModuleAnalysisManager &MAM) {
   LLVMContext &ctx = M.getContext();
   int64ty = Type::getInt64Ty(ctx);
   charstar = Type::getInt8PtrTy(ctx);
-
-  init_func = M.getOrInsertFunction(
-    "init_san",
-    Type::getInt32Ty(ctx)
-    );
 
   finish_func = M.getOrInsertFunction(
     "finish_san",
@@ -69,7 +64,6 @@ PreservedAnalyses MemPass::run(Module &M, ModuleAnalysisManager &MAM) {
   debug = M.getNamedMetadata("llvm.dbg.cu") != NULL;
 
   /* I have no idea of what the priority value means, but it doesn't matter */
-  appendToGlobalCtors(M, cast<Function>(init_func.getCallee()), 99, NULL);
   appendToGlobalDtors(M, cast<Function>(finish_func.getCallee()), 99, NULL);
   
   visit(M);
