@@ -5,7 +5,6 @@
 static void
 set_up_fixture(Detected **array, gconstpointer data)
 {
-	init_san();
 	*array = NULL;
 }
 
