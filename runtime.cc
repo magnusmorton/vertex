@@ -21,6 +21,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <map>
+#include <optional>
 #include <vector>
 
 #include <boost/graph/adjacency_list.hpp>
@@ -48,13 +49,35 @@ typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
 std::vector<MemGraph::vertex_descriptor> vds;
 MemGraph graph;
 
+unsigned max_offset = 0;
+
 struct memory_node {
   char *addr;
   size_t extent;
-  std::map<unsigned long, MemGraph::edge_descriptor> slots;
+  std::map<unsigned long, std::optional<MemGraph::edge_descriptor>> slots;
   memory_node(char *a, size_t ex) : addr(a), extent(ex)
   {}
+
+  // needs to be called again if slots is updated
+  unsigned compute_code();
+  unsigned code() const { return _code; } 
+private:
+  unsigned _code = 0;
 };
+
+unsigned memory_node::compute_code() {
+  unsigned acc = 0;
+  for(auto it = slots.begin(); it != slots.end(); ++it) {
+    if (it == slots.begin()) {
+      acc = it->first;
+    }
+    else {
+      acc = acc * max_offset + it->first;
+    }
+  }
+  _code = acc;
+  return _code;
+}
 
 std::ostream& operator<<(std::ostream& os, memory_node& obj)
 {
@@ -78,11 +101,8 @@ Detected detect_from_component(std::vector<MemGraph::vertex_descriptor> &subgrap
   /* memory_node prev; */
   for (auto v : subgraph) {
     memory_node& n = root_nodes[v];
-    std::cerr << "slots: ";
-    for (const auto[k,v] : n.slots) {
-      std::cerr << k << " ";
-    }
-    std::cerr << std::endl;
+    unsigned code = n.compute_code();
+    std::cerr << "slot code: " << code << std::endl;
     /* prev = n; */
   }
   
@@ -157,7 +177,8 @@ size_t get_detected(Detected **out) {
   *out = static_cast<Detected*>(malloc(sizeof(Detected) * num_components));
   for (auto it = components.begin(); it != components.end(); ++it){
     Detected ds_type = detect_from_component(*it);
-    *out[it - components.begin()] = ds_type;
+    unsigned i = it - components.begin();
+    (*out)[i] = ds_type;
   }
 
   return num_components;
@@ -241,30 +262,36 @@ void handle_store(void *vtarget, void *vsource) {
   auto s_found = std::find_if(root_nodes.begin(), root_nodes.end(), [=](memory_node n) { return match_root(source,n);});
   
   auto end = std::end(root_nodes);
-  if (t_found != end && s_found != end ) {
+  if (t_found != end) {
     ti = t_found - root_nodes.begin();
-    si = s_found - root_nodes.begin();
-    fprintf(stderr, "handling store..... %p into %p\n", source, target);
-    fprintf(stderr, "adding edge from %ld to %ld\n", ti, si);
-
     memory_node& target_node = *t_found;
-
     long offset = target - target_node.addr;
+    if (offset > max_offset)
+      max_offset = offset;
     fprintf(stderr, "offset: %ld\n", offset);
 
+    if (s_found != end) {
+      si = s_found - root_nodes.begin();
+      fprintf(stderr, "handling store..... %p into %p\n", source, target);
+      fprintf(stderr, "adding edge from %ld to %ld\n", ti, si);
 
-    /* add edges in reverse order so first alloc is root */
-    auto[edge, added] = boost::add_edge(vds[ti], vds[si], graph);
+      /* add edges in reverse order so first alloc is root */
+      auto[edge, added] = boost::add_edge(vds[ti], vds[si], graph);
 
-    auto it = target_node.slots.find(offset);
-    if (it != target_node.slots.end()) {
-      MemGraph::edge_descriptor prev_store = it->second;
-      std::cerr << "deleting bgl edge: " << prev_store << std::endl;
-      boost::remove_edge(prev_store, graph);
+      auto it = target_node.slots.find(offset);
+      if (it != target_node.slots.end()) {
+      
+        MemGraph::edge_descriptor prev_store;
+        if (it->second.has_value()) {
+          prev_store = it->second.value();
+          std::cerr << "deleting bgl edge: " << prev_store << std::endl;
+          boost::remove_edge(prev_store, graph);
+        }
+      }
+      target_node.slots[offset] = edge;
     }
-    target_node.slots[offset] = edge;
-  }
-  if (t_found != end && !vsource) {
-    
+    else if (!vsource) {
+      target_node.slots[offset] = {};
+    }
   }
 }
