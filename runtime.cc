@@ -262,8 +262,6 @@ void check_ptr(void *ptr, const char *file, unsigned line) {
 }
 
 void handle_store(void *vtarget, void *vsource) {
-  if (!vsource)
-    std::cerr << "NULL PTR!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!" << std::endl;
   unsigned long ti, si;
   char *target = static_cast<char*>(vtarget);
   char *source = static_cast<char*>(vsource);
