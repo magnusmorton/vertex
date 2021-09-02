@@ -71,6 +71,7 @@ unsigned memory_node::compute_code() {
     if (it == slots.begin()) {
       acc = it->first;
     }
+    // pairing function. each pair < max_offset should produce unique sequence
     else {
       acc = acc * max_offset + it->first;
     }
