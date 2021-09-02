@@ -26,6 +26,7 @@
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/connected_components.hpp>
+#include <boost/graph/copy.hpp>
 #include <boost/graph/graphviz.hpp>
 
 
@@ -46,6 +47,10 @@ struct graph_property {
 
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
                               vertex_property> MemGraph;
+
+typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS,
+                              vertex_property> UGraph;
+
 std::vector<MemGraph::vertex_descriptor> vds;
 MemGraph graph;
 
@@ -151,10 +156,13 @@ Detected detect_from_component(std::vector<MemGraph::vertex_descriptor> &subgrap
 }
 
 unsigned weak_components(MemGraph &graph) {
-  std::cerr << "WEAK COMPONENTS" << std::endl;
-  // connected components seems to work as is for bidirectionalS graph
+  UGraph copy;
+  boost::copy_graph(graph, copy);
+
+  // HACK: do connected components on undirected copy and write to properties of
+  // directed graph. This will probably break in the future
   unsigned number_of_components = 
-      boost::connected_components(graph, 
+      boost::connected_components(copy, 
                                boost::get(&vertex_property::component, graph));
 
   return number_of_components;
@@ -173,6 +181,7 @@ size_t get_detected(Detected **out) {
   std::vector<std::vector<MemGraph::vertex_descriptor>> components(num_components);
   for (auto vd : boost::make_iterator_range(vertices(graph))) {
     components[graph[vd].component].push_back(vd);
+    std::cerr << "COMPONENT: " << graph[vd].component << std::endl;
   }
 
   *out = static_cast<Detected*>(malloc(sizeof(Detected) * num_components));
