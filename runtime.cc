@@ -29,7 +29,6 @@
 #include <boost/graph/copy.hpp>
 #include <boost/graph/graphviz.hpp>
 
-
 #include "runtime.h"
 
 #define ROOT_CHUNK 512
