@@ -93,25 +93,10 @@ std::ostream& operator<<(std::ostream& os, memory_node& obj)
 std::vector<memory_node> root_nodes;
 
 
-Detected detect_from_component(std::vector<MemGraph::vertex_descriptor> &subgraph) {
+Detected detect_from_subtype(std::vector<MemGraph::vertex_desctriptor> &subgraph) {
   Detected ret = MAYBE;
-  
   std::cerr << "size: " << subgraph.size() << std::endl;
-
-  for (auto v : subgraph) {
-    std::cerr << root_nodes[v] << std::endl;
-  }
-  
-  // TODO: something slots
-  /* memory_node prev; */
-  for (auto v : subgraph) {
-    memory_node& n = root_nodes[v];
-    unsigned code = n.compute_code();
-    std::cerr << "slot code: " << code << std::endl;
-    /* prev = n; */
-  }
-  
-  if (subgraph.size() == 1) {
+    if (subgraph.size() == 1) {
     ret = ARRAY;
   }
   else {
@@ -152,6 +137,30 @@ Detected detect_from_component(std::vector<MemGraph::vertex_descriptor> &subgrap
       ret = DOUBLE_LL;
   }
   return ret;
+}
+
+Detected detect_from_component(std::vector<MemGraph::vertex_descriptor> &subgraph) {
+  
+  
+  std::cerr << "size: " << subgraph.size() << std::endl;
+
+  for (auto v : subgraph) {
+    std::cerr << root_nodes[v] << std::endl;
+  }
+  
+  // TODO: something slots
+  /* memory_node prev; */
+  std::map<unsigned, std::vector<MemGraph::vertex_descriptor>> types;
+  for (auto v : subgraph) {
+    memory_node& n = root_nodes[v];
+    unsigned code = n.compute_code();
+    std::cerr << "slot code: " << code << std::endl;
+    types[code].push_back(v);
+  }
+
+  return MAYBE;
+  
+
 }
 
 unsigned weak_components(MemGraph &graph) {
