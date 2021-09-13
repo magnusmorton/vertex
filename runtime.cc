@@ -64,9 +64,16 @@ struct memory_node {
 
   // needs to be called again if slots is updated
   unsigned compute_code();
-  unsigned code() const { return _code; } 
+  unsigned code() {
+    if (!calculated) {
+      compute_code();
+      calculated = true;
+    }
+    return _code;
+  } 
 private:
   unsigned _code = 0;
+  bool calculated = false;
 };
 
 unsigned memory_node::compute_code() {
