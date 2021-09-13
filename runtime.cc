@@ -228,7 +228,7 @@ size_t get_detected(Detected **out) {
 
   *out = static_cast<Detected*>(malloc(sizeof(Detected) * num_components));
   for (auto it = components.begin(); it != components.end(); ++it){
-    Detected ds_type = detect_from_component(*it);
+    Detected ds_type = detect_from_subtype(*it);
     unsigned i = it - components.begin();
     (*out)[i] = ds_type;
   }
@@ -274,7 +274,7 @@ void finish_san() {
   file.open("graph.dot");
   boost::write_graphviz(file, graph);
   file.close();
-
+  
   free(detected);
 }
 
