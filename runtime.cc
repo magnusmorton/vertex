@@ -100,7 +100,7 @@ std::ostream& operator<<(std::ostream& os, memory_node& obj)
 std::vector<memory_node> root_nodes;
 
 
-Detected detect_from_subtype(std::vector<MemGraph::vertex_desctriptor> &subgraph) {
+Detected detect_from_subtype(std::vector<MemGraph::vertex_descriptor> &subgraph) {
   Detected ret = MAYBE;
   std::cerr << "size: " << subgraph.size() << std::endl;
     if (subgraph.size() == 1) {
@@ -151,9 +151,12 @@ Detected detect_from_component(std::vector<MemGraph::vertex_descriptor> &subgrap
   
   std::cerr << "size: " << subgraph.size() << std::endl;
 
-  for (auto v : subgraph) {
-    std::cerr << root_nodes[v] << std::endl;
-  }
+  int splits = 0;
+  std::cerr << "BEGIN SUBGRAPH" << std::endl;
+  
+  // TODO: something. move to before connected_components is called?
+
+  std::cerr << "END SUBGRAPH" << std::endl;
   
   // TODO: something slots
   /* memory_node prev; */
@@ -187,13 +190,37 @@ unsigned weak_components(MemGraph &graph) {
 
 size_t get_detected(Detected **out) {
 
+  std::vector<MemGraph::edge_descriptor> del_edges;
+  for (auto [eit, e_end] = boost::edges(graph); eit != e_end; ++eit) {
+    MemGraph::vertex_descriptor vt = boost::target(*eit, graph) ;
+    MemGraph::vertex_descriptor vs = boost::source(*eit, graph) ;
+    memory_node& nt = root_nodes[vt];
+    memory_node& ns = root_nodes[vs];
+    
+    if (nt.code() != ns.code()) {
+      std::cerr << "DISCONTINUITY" << std::endl;
+      del_edges.push_back(*eit);
+    }
+  }
+
+  for (auto e : del_edges) {
+    boost::remove_edge(e, graph);
+  }
+
+  
   /**
     separate connected commponents are obviously separate data structures
    **/
 
   unsigned num_components = weak_components(graph);
+
   
   std::vector<std::vector<MemGraph::vertex_descriptor>> components(num_components);
+  std::vector<MemGraph> _components(num_components);
+  // for (int i = 0; i < num_components; ++i) {
+  //   _components.push_back(graph.create_subgraph());
+  // }
+  
   for (auto vd : boost::make_iterator_range(vertices(graph))) {
     components[graph[vd].component].push_back(vd);
     std::cerr << "COMPONENT: " << graph[vd].component << std::endl;
