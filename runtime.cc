@@ -14,7 +14,7 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <https://www.gnu.org/licenses/>.
-   */
+*/
 
 #include <algorithm>
 #include <cstdio>
@@ -206,7 +206,7 @@ size_t get_detected(Detected **out) {
   for (auto e : del_edges) {
     boost::remove_edge(e, graph);
   }
-
+  
   
   /**
     separate connected commponents are obviously separate data structures
