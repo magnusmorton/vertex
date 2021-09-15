@@ -146,33 +146,6 @@ Detected detect_from_subtype(std::vector<MemGraph::vertex_descriptor> &subgraph)
   return ret;
 }
 
-Detected detect_from_component(std::vector<MemGraph::vertex_descriptor> &subgraph) {
-  
-  
-  std::cerr << "size: " << subgraph.size() << std::endl;
-
-  int splits = 0;
-  std::cerr << "BEGIN SUBGRAPH" << std::endl;
-  
-  // TODO: something. move to before connected_components is called?
-
-  std::cerr << "END SUBGRAPH" << std::endl;
-  
-  // TODO: something slots
-  /* memory_node prev; */
-  std::map<unsigned, std::vector<MemGraph::vertex_descriptor>> types;
-  for (auto v : subgraph) {
-    memory_node& n = root_nodes[v];
-    unsigned code = n.compute_code();
-    std::cerr << "slot code: " << code << std::endl;
-    types[code].push_back(v);
-  }
-
-  return MAYBE;
-  
-
-}
-
 unsigned weak_components(MemGraph &graph) {
   UGraph copy;
   boost::copy_graph(graph, copy);
@@ -208,10 +181,6 @@ size_t get_detected(Detected **out) {
   }
   
   
-  /**
-    separate connected commponents are obviously separate data structures
-   **/
-
   unsigned num_components = weak_components(graph);
 
   
