@@ -35,6 +35,11 @@
 
 struct vertex_property {
   int component;
+  bool has_substructure = false;
+};
+
+struct component_vertex {
+  Detected type;
 };
 
 struct edge_property {
@@ -50,8 +55,11 @@ typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS,
                               vertex_property> UGraph;
 
+typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS,
+                              component_vertex> ComponentGraph;
 std::vector<MemGraph::vertex_descriptor> vds;
 MemGraph graph;
+ComponentGraph structures;
 
 unsigned max_offset = 0;
 
@@ -98,7 +106,7 @@ std::ostream& operator<<(std::ostream& os, memory_node& obj)
 }
 
 std::vector<memory_node> root_nodes;
-
+std::map<MemGraph::vertex_descriptor, MemGraph::vertex_descriptor> removed_edges;
 
 Detected detect_from_subtype(std::vector<MemGraph::vertex_descriptor> &subgraph) {
   Detected ret = MAYBE;
@@ -113,6 +121,9 @@ Detected detect_from_subtype(std::vector<MemGraph::vertex_descriptor> &subgraph)
     // single LL
     bool is_ll = true;
     for (auto vd : subgraph) {
+      if (boost::get(&vertex_property::has_substructure, graph, vd)) {
+        MemGraph::vertex_descriptor v_other = removed_edges[vd];
+      }
       unsigned in = boost::in_degree(vd, graph);
       unsigned out = boost::out_degree(vd, graph);
 
@@ -172,7 +183,9 @@ size_t get_detected(Detected **out) {
     
     if (nt.code() != ns.code()) {
       std::cerr << "DISCONTINUITY" << std::endl;
+      removed_edges[vt] = vs;
       del_edges.push_back(*eit);
+      boost::put(&vertex_property::has_substructure, graph, vt, true);
     }
   }
 
@@ -197,8 +210,11 @@ size_t get_detected(Detected **out) {
 
   *out = static_cast<Detected*>(malloc(sizeof(Detected) * num_components));
   for (auto it = components.begin(); it != components.end(); ++it){
-    Detected ds_type = detect_from_subtype(*it);
+    ComponentGraph::vertex_descriptor vd = boost::add_vertex(structures);
     unsigned i = it - components.begin();
+    assert(vd == i);
+    Detected ds_type = detect_from_subtype(*it);
+
     (*out)[i] = ds_type;
   }
 
