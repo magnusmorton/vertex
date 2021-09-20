@@ -2,12 +2,12 @@
 
 
 typedef enum Detected {
-  LL,
+	LL,
 	DOUBLE_LL,
-  ARRAY,
-  TREE,
-  GRAPH,
-  MAYBE
+	ARRAY,
+	TREE,
+	GRAPH,
+	MAYBE
 } Detected;
 
 
