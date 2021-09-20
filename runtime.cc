@@ -99,10 +99,16 @@ unsigned memory_node::compute_code() {
   return _code;
 }
 
-std::ostream& operator<<(std::ostream& os, memory_node& obj)
-{
-    os << "Addr: " << obj.addr << " extent: " << obj.extent << " slots: " << obj.slots.size(); 
-    return os;
+std::ostream& operator<<(std::ostream& os, memory_node& obj) {
+  os << "Addr: " << obj.addr << " extent: " << obj.extent << " slots: " << obj.slots.size(); 
+  return os;
+}
+
+DataType* make_datatype(Detected d, DataType *subtype) {
+  DataType *out = static_cast<DataType*>(malloc(sizeof(DataType)));
+  out->type = d;
+  out->inner = subtype;
+  return out;
 }
 
 std::vector<memory_node> root_nodes;
