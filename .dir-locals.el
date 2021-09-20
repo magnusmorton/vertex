@@ -2,4 +2,5 @@
 	    (c-basic-offset . 8)))
  (c++-mode . ((c-file-style .  "BSD")
 	      (c-basic-offset . 2)
-              (indent-tabs-mode . nil))))
+              (indent-tabs-mode . nil)))
+ (nil . ((compile-command . "make -k -j8 -C build"))))
