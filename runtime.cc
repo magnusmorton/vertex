@@ -95,6 +95,7 @@ unsigned memory_node::compute_code() {
       acc = acc * max_offset + it->first;
     }
   }
+  calculated = true;
   _code = acc;
   return _code;
 }
@@ -113,6 +114,7 @@ DataType* make_datatype(Detected d, DataType *subtype) {
 
 std::vector<memory_node> root_nodes;
 std::map<MemGraph::vertex_descriptor, MemGraph::vertex_descriptor> removed_edges;
+
 
 Detected detect_from_subtype(std::vector<MemGraph::vertex_descriptor> &subgraph) {
   Detected ret = MAYBE;
@@ -165,6 +167,7 @@ Detected detect_from_subtype(std::vector<MemGraph::vertex_descriptor> &subgraph)
 
 unsigned weak_components(MemGraph &graph) {
   UGraph copy;
+  
   boost::copy_graph(graph, copy);
 
   // HACK: do connected components on undirected copy and write to properties of
@@ -172,7 +175,7 @@ unsigned weak_components(MemGraph &graph) {
   unsigned number_of_components = 
       boost::connected_components(copy, 
                                boost::get(&vertex_property::component, graph));
-
+  
   return number_of_components;
 }
 
@@ -188,7 +191,6 @@ size_t get_detected(Detected **out) {
     memory_node& ns = root_nodes[vs];
     
     if (nt.code() != ns.code()) {
-      std::cerr << "DISCONTINUITY" << std::endl;
       removed_edges[vt] = vs;
       del_edges.push_back(*eit);
       boost::put(&vertex_property::has_substructure, graph, vt, true);
@@ -199,19 +201,24 @@ size_t get_detected(Detected **out) {
     boost::remove_edge(e, graph);
   }
   
-  
-  unsigned num_components = weak_components(graph);
 
-  
+  unsigned num_components = weak_components(graph);
+  std::vector<long> component_map(num_components, -1);
+  std::vector<Detected> component_types(num_components);
   std::vector<std::vector<MemGraph::vertex_descriptor>> components(num_components);
-  std::vector<MemGraph> _components(num_components);
   // for (int i = 0; i < num_components; ++i) {
   //   _components.push_back(graph.create_subgraph());
   // }
   
   for (auto vd : boost::make_iterator_range(vertices(graph))) {
-    components[graph[vd].component].push_back(vd);
-    std::cerr << "COMPONENT: " << graph[vd].component << std::endl;
+    unsigned component = graph[vd].component;
+    components[component].push_back(vd);
+    std::cerr << "COMPONENT: " << component << std::endl;
+    // if vertex is at edge of component, store
+    if (boost::get(&vertex_property::has_substructure, graph, vd)) {
+      MemGraph::vertex_descriptor vother = removed_edges[vd];
+      component_map[component] = boost::get(&vertex_property::component, graph, vother);
+    }
   }
 
   *out = static_cast<Detected*>(malloc(sizeof(Detected) * num_components));
@@ -220,8 +227,17 @@ size_t get_detected(Detected **out) {
     unsigned i = it - components.begin();
     assert(vd == i);
     Detected ds_type = detect_from_subtype(*it);
+    component_types[i] = ds_type;
 
     (*out)[i] = ds_type;
+  }
+
+  for (auto it = component_map.begin(); it != component_map.end(); ++it) {
+    unsigned i = it - component_map.begin();
+    if (*it >= 0) {
+      std::cerr << "DISCONTINUITY" << std::endl;
+      Detected
+    }
   }
 
   return num_components;
