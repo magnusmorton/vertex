@@ -129,9 +129,6 @@ Detected detect_from_subtype(std::vector<MemGraph::vertex_descriptor> &subgraph)
     // single LL
     bool is_ll = true;
     for (auto vd : subgraph) {
-      if (boost::get(&vertex_property::has_substructure, graph, vd)) {
-        MemGraph::vertex_descriptor v_other = removed_edges[vd];
-      }
       unsigned in = boost::in_degree(vd, graph);
       unsigned out = boost::out_degree(vd, graph);
 
@@ -164,6 +161,10 @@ Detected detect_from_subtype(std::vector<MemGraph::vertex_descriptor> &subgraph)
   }
   return ret;
 }
+
+/* Detected detect_all(unsigned component, const std::vector<long> &compenent_map, const std::map<unsigned, Detected> &component_types) { */
+/*   long child = component_map; */
+/* } */
 
 unsigned weak_components(MemGraph &graph) {
   UGraph copy;
@@ -204,11 +205,13 @@ size_t get_detected(Detected **out) {
 
   unsigned num_components = weak_components(graph);
   std::vector<long> component_map(num_components, -1);
-  std::vector<Detected> component_types(num_components);
+  std::map<unsigned, Detected> component_types;
   std::vector<std::vector<MemGraph::vertex_descriptor>> components(num_components);
-  // for (int i = 0; i < num_components; ++i) {
-  //   _components.push_back(graph.create_subgraph());
-  // }
+  std::set<unsigned> root_components;
+  std::set<unsigned> seen;
+  for (int i = 0; i < num_components; ++i) {
+    root_components.insert(i);
+  }
   
   for (auto vd : boost::make_iterator_range(vertices(graph))) {
     unsigned component = graph[vd].component;
@@ -216,9 +219,12 @@ size_t get_detected(Detected **out) {
     std::cerr << "COMPONENT: " << component << std::endl;
     // if vertex is at edge of component, store
     if (boost::get(&vertex_property::has_substructure, graph, vd)) {
+      // TODO: we need to extract the components which no component points to 
       MemGraph::vertex_descriptor vother = removed_edges[vd];
-      component_map[component] = boost::get(&vertex_property::component, graph, vother);
-    }
+      unsigned child_component = boost::get(&vertex_property::component, graph, vother);
+      root_components.erase(child_component);
+      component_map[component] = child_component;
+    } 
   }
 
   *out = static_cast<Detected*>(malloc(sizeof(Detected) * num_components));
@@ -231,15 +237,24 @@ size_t get_detected(Detected **out) {
 
     (*out)[i] = ds_type;
   }
-
-  for (auto it = component_map.begin(); it != component_map.end(); ++it) {
-    unsigned i = it - component_map.begin();
-    if (*it >= 0) {
-      std::cerr << "DISCONTINUITY" << std::endl;
-      Detected
-    }
+  
+  for (unsigned comp : root_components) {
+    std::cout << "fooo" << std::endl;
   }
-
+  // visit every component/type, and DFS each connected component
+  // TODO: use boost for DFS/connected components
+  /* for (auto it = component_types.begin(); it != component_types.end();) { */
+  /*   auto[component, type] = *it; */
+  /*   std::deque<unsigned> to_visit; */
+  /*   to_visit.push_back(component); */
+  /*   it = component_types.erase(it); */
+  /*   while (!to_visit.empty()) { */
+       
+  /*   } */
+  /* } */
+    
+  
+  
   return num_components;
 }
 
