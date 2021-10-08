@@ -192,9 +192,11 @@ size_t get_detected(Detected **out) {
     memory_node& ns = root_nodes[vs];
     
     if (nt.code() != ns.code()) {
-      removed_edges[vt] = vs;
+
+      std::cerr << "removed: " << vs << " to " << vt << std::endl;
+      removed_edges[vs] = vt;
       del_edges.push_back(*eit);
-      boost::put(&vertex_property::has_substructure, graph, vt, true);
+      boost::put(&vertex_property::has_substructure, graph, vs, true);
     }
   }
 
@@ -213,16 +215,18 @@ size_t get_detected(Detected **out) {
     root_components.insert(i);
   }
   
+  std::cerr << "Num split edges: " << removed_edges.size() << std::endl;
   for (auto vd : boost::make_iterator_range(vertices(graph))) {
     unsigned component = graph[vd].component;
     components[component].push_back(vd);
-    std::cerr << "COMPONENT: " << component << std::endl;
+    std::cerr << "COMPONENT: " << component << " vd: " << vd <<  std::endl;
     // if vertex is at edge of component, store
     if (boost::get(&vertex_property::has_substructure, graph, vd)) {
       // TODO: we need to extract the components which no component points to 
       MemGraph::vertex_descriptor vother = removed_edges[vd];
       unsigned child_component = boost::get(&vertex_property::component, graph, vother);
       root_components.erase(child_component);
+      std::cerr << "BLEHHHH: " << child_component << " vd: " << vother <<  std::endl;
       component_map[component] = child_component;
     } 
   }
@@ -282,6 +286,11 @@ void decode_enum(Detected type, char *str) {
 }
 
 void finish_san() {
+  std::ofstream file;
+  file.open("graph.dot");
+  boost::write_graphviz(file, graph);
+  file.close();
+
   Detected *detected;
   size_t len = get_detected(&detected);
   fprintf(stderr, "number of datastructures: %lu\n", len);
@@ -292,11 +301,10 @@ void finish_san() {
     fprintf(stderr, "Data structure %d: %s\n", i, out);
   }
 
-  std::ofstream file;
-  file.open("graph.dot");
+  
+  file.open("disconnected.dot");
   boost::write_graphviz(file, graph);
   file.close();
-  
   free(detected);
 }
 
