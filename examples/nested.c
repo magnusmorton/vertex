@@ -35,7 +35,7 @@ dlink_new(void *data)
 int 
 main()
 {
-  link *a, *b, *c, *d, *e, *out_a, *out_b;
+  link *a, *b, *c, *d, *e, *out_a, *out_b, *out_c;
   a = link_new(1);
   b = link_new(2);
   c = link_new(3);
@@ -46,8 +46,15 @@ main()
   insert_append(a, c);
   out_a = dlink_new(a);
   out_b = dlink_new(d);
+  out_c = dlink_new(NULL);
   insert_append(out_a, out_b);
+  insert_append(out_b, out_c);
   free(a);
   free(b);
   free(c);
+  free(d);
+  free(e);
+  free(out_a);
+  free(out_b);
+  free(out_c);
 }
