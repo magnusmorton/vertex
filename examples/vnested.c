@@ -49,5 +49,7 @@ main()
 	free(a);
 	free(b);
 	free(c);
+	free(d);
+	free(e);
 	free(arr);
 }
