@@ -113,7 +113,7 @@ DataType* make_datatype(Detected d, DataType *subtype) {
 }
 
 std::vector<memory_node> root_nodes;
-std::map<MemGraph::vertex_descriptor, MemGraph::vertex_descriptor> removed_edges;
+std::multimap<MemGraph::vertex_descriptor, MemGraph::vertex_descriptor> removed_edges;
 
 
 Detected detect_from_subtype(std::vector<MemGraph::vertex_descriptor> &subgraph) {
@@ -185,6 +185,7 @@ unsigned weak_components(MemGraph &graph) {
 size_t get_detected(Detected **out) {
 
   std::vector<MemGraph::edge_descriptor> del_edges;
+  std::cerr << "BEGIN SPLITTING" << std::endl;
   for (auto [eit, e_end] = boost::edges(graph); eit != e_end; ++eit) {
     MemGraph::vertex_descriptor vt = boost::target(*eit, graph) ;
     MemGraph::vertex_descriptor vs = boost::source(*eit, graph) ;
@@ -194,7 +195,7 @@ size_t get_detected(Detected **out) {
     if (nt.code() != ns.code()) {
 
       std::cerr << "removed: " << vs << " to " << vt << std::endl;
-      removed_edges[vs] = vt;
+      removed_edges.insert(std::make_pair(vs, vt));
       del_edges.push_back(*eit);
       boost::put(&vertex_property::has_substructure, graph, vs, true);
     }
@@ -215,19 +216,21 @@ size_t get_detected(Detected **out) {
     root_components.insert(i);
   }
   
-  std::cerr << "Num split edges: " << removed_edges.size() << std::endl;
+  std::cerr << "Num split edges: " << del_edges.size() << std::endl;
   for (auto vd : boost::make_iterator_range(vertices(graph))) {
     unsigned component = graph[vd].component;
     components[component].push_back(vd);
     std::cerr << "COMPONENT: " << component << " vd: " << vd <<  std::endl;
     // if vertex is at edge of component, store
     if (boost::get(&vertex_property::has_substructure, graph, vd)) {
-      // TODO: we need to extract the components which no component points to 
-      MemGraph::vertex_descriptor vother = removed_edges[vd];
-      unsigned child_component = boost::get(&vertex_property::component, graph, vother);
-      root_components.erase(child_component);
-      std::cerr << "BLEHHHH: " << child_component << " vd: " << vother <<  std::endl;
-      component_map[component] = child_component;
+      // we need to extract the components which no component points to 
+      for (auto[it, end_it] = removed_edges.equal_range(vd); it != end_it; ++it) {
+        MemGraph::vertex_descriptor vother = it->second;
+        unsigned child_component = boost::get(&vertex_property::component, graph, vother);
+        root_components.erase(child_component);
+        std::cerr << "BLEHHHH: " << child_component << " vd: " << vother <<  std::endl;
+        component_map[component] = child_component;
+      }
     } 
   }
 
