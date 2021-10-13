@@ -45,7 +45,7 @@ main()
 	e = link_new(5);
 	insert_append(d, e);
 	insert_append(a, b);
-	insert_append(a, c);
+	insert_append(b, c);
 	free(a);
 	free(b);
 	free(c);
