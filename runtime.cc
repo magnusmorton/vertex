@@ -182,7 +182,7 @@ unsigned weak_components(MemGraph &graph) {
 
 
 
-size_t get_detected(Detected **out) {
+size_t get_detected(DataType **out) {
 
   std::vector<MemGraph::edge_descriptor> del_edges;
   std::cerr << "BEGIN SPLITTING" << std::endl;
@@ -234,34 +234,34 @@ size_t get_detected(Detected **out) {
     } 
   }
 
-  *out = static_cast<Detected*>(malloc(sizeof(Detected) * num_components));
+  *out = static_cast<DataType*>(malloc(sizeof(DataType) * num_components));
   for (auto it = components.begin(); it != components.end(); ++it){
     ComponentGraph::vertex_descriptor vd = boost::add_vertex(structures);
     unsigned i = it - components.begin();
     assert(vd == i);
     Detected ds_type = detect_from_subtype(*it);
     component_types[i] = ds_type;
-
-    (*out)[i] = ds_type;
   }
-  
+  int i = 0;
   for (unsigned comp : root_components) {
     std::cout << "fooo" << std::endl;
+    unsigned curr = comp;
+    bool end = false;
+    DataType *top = make_datatype(component_types[curr], NULL);
+    DataType *parent = top;
+    while (!end) {
+      if (curr > component_map.size() -1) {
+        end = true;
+        break;
+      }
+      
+      curr = component_map[curr];
+      parent->inner = make_datatype(component_types[curr], NULL);
+      parent = parent->inner;
+    }
+    out[i++] = parent;
+
   }
-  // visit every component/type, and DFS each connected component
-  // TODO: use boost for DFS/connected components
-  /* for (auto it = component_types.begin(); it != component_types.end();) { */
-  /*   auto[component, type] = *it; */
-  /*   std::deque<unsigned> to_visit; */
-  /*   to_visit.push_back(component); */
-  /*   it = component_types.erase(it); */
-  /*   while (!to_visit.empty()) { */
-       
-  /*   } */
-  /* } */
-    
-  
-  
   return num_components;
 }
 
@@ -294,13 +294,13 @@ void finish_san() {
   boost::write_graphviz(file, graph);
   file.close();
 
-  Detected *detected;
+  DataType *detected;
   size_t len = get_detected(&detected);
   fprintf(stderr, "number of datastructures: %lu\n", len);
 
   char out[16];
   for (int i = 0; i < len; i++) {
-    decode_enum(detected[i], out);
+    DataType dt = detected[i];
     fprintf(stderr, "Data structure %d: %s\n", i, out);
   }
 
