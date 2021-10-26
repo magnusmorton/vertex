@@ -182,7 +182,7 @@ unsigned weak_components(MemGraph &graph) {
 
 
 
-size_t get_detected(DataType **out) {
+size_t get_detected(DataType ***out) {
 
   std::vector<MemGraph::edge_descriptor> del_edges;
   std::cerr << "BEGIN SPLITTING" << std::endl;
@@ -234,7 +234,7 @@ size_t get_detected(DataType **out) {
     } 
   }
 
-  *out = static_cast<DataType*>(malloc(sizeof(DataType) * num_components));
+  *out = static_cast<DataType**>(malloc(sizeof(DataType*) * num_components));
   for (auto it = components.begin(); it != components.end(); ++it){
     ComponentGraph::vertex_descriptor vd = boost::add_vertex(structures);
     unsigned i = it - components.begin();
@@ -250,42 +250,57 @@ size_t get_detected(DataType **out) {
     DataType *top = make_datatype(component_types[curr], NULL);
     DataType *parent = top;
     while (!end) {
-      if (curr > component_map.size() -1) {
+      
+      // TODO: badness is here most likely
+      curr = component_map[curr];
+      if (curr == -1) {
         end = true;
         break;
+      } else {
+        parent->inner = make_datatype(component_types[curr], NULL);
+        parent = parent->inner;
       }
-      
-      curr = component_map[curr];
-      parent->inner = make_datatype(component_types[curr], NULL);
-      parent = parent->inner;
     }
-    out[i++] = parent;
-
+    (*out)[i++] = parent;
   }
+  //for (int i = 0; i <  num_components; ++i) {
+  //  std::cerr << parent->inner << std::endl;
   return num_components;
 }
 
-void decode_enum(Detected type, char *str) {
+void decode_enum(Detected type, std::ostream& out) {
   switch(type) {
     case LL:
-      sprintf(str, "LL");
+      out << "LL";
       break;
     case DOUBLE_LL:
-      sprintf(str, "DOUBLE LL");
+      out << "DOUBLE LL";
       break;
     case ARRAY:
-      sprintf(str, "ARRAY");
+      out << "ARRAY";
       break;
     case GRAPH:
-      sprintf(str, "GRAPH");
+      out << "GRAPH";
       break;
     case TREE:
-      sprintf(str, "TREE");
+      out << "TREE";
       break;
     case MAYBE:
-      sprintf(str, "MAYBE");
+      out << "MAYBE";
       break;
   }
+}
+
+void decode_datatype(DataType *dt, std::ostream& out) {
+  DataType *curr = dt;
+  while (curr) {
+    decode_enum(curr->type, out);
+    if (curr->inner) {
+      out << " of" << std::endl << "\t";
+    }
+    curr = curr->inner;
+  }
+  out << std::endl;
 }
 
 void finish_san() {
@@ -294,14 +309,14 @@ void finish_san() {
   boost::write_graphviz(file, graph);
   file.close();
 
-  DataType *detected;
+  DataType **detected;
   size_t len = get_detected(&detected);
   fprintf(stderr, "number of datastructures: %lu\n", len);
 
-  char out[16];
   for (int i = 0; i < len; i++) {
-    DataType dt = detected[i];
-    fprintf(stderr, "Data structure %d: %s\n", i, out);
+    DataType *dt = detected[i];
+    std::cerr << dt << std::endl;
+    decode_datatype(dt, std::cout);
   }
 
   
