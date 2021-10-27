@@ -228,13 +228,12 @@ size_t get_detected(DataType ***out) {
         MemGraph::vertex_descriptor vother = it->second;
         unsigned child_component = boost::get(&vertex_property::component, graph, vother);
         root_components.erase(child_component);
-        std::cerr << "BLEHHHH: " << child_component << " vd: " << vother <<  std::endl;
         component_map[component] = child_component;
       }
     } 
   }
 
-  *out = static_cast<DataType**>(malloc(sizeof(DataType*) * num_components));
+  *out = static_cast<DataType**>(malloc(sizeof(DataType*) * root_components.size()));
   for (auto it = components.begin(); it != components.end(); ++it){
     ComponentGraph::vertex_descriptor vd = boost::add_vertex(structures);
     unsigned i = it - components.begin();
@@ -244,7 +243,6 @@ size_t get_detected(DataType ***out) {
   }
   int i = 0;
   for (unsigned comp : root_components) {
-    std::cout << "fooo" << std::endl;
     unsigned curr = comp;
     bool end = false;
     DataType *top = make_datatype(component_types[curr], NULL);
@@ -261,11 +259,10 @@ size_t get_detected(DataType ***out) {
         parent = parent->inner;
       }
     }
-    (*out)[i++] = parent;
+    (*out)[i++] = top;
   }
-  //for (int i = 0; i <  num_components; ++i) {
-  //  std::cerr << parent->inner << std::endl;
-  return num_components;
+
+  return root_components.size();
 }
 
 void decode_enum(Detected type, std::ostream& out) {
@@ -315,7 +312,6 @@ void finish_san() {
 
   for (int i = 0; i < len; i++) {
     DataType *dt = detected[i];
-    std::cerr << dt << std::endl;
     decode_datatype(dt, std::cout);
   }
 
