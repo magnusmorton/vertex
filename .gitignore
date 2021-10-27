@@ -5,7 +5,11 @@ VertexConfig.h
 *.elc
 *.o
 graph.dot
-graph.png
+disconnected.dot
 tags
 TAGS
 cscope.out
+vgcore.*
+.vscode
+*.png
+
