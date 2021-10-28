@@ -104,8 +104,7 @@ std::multimap<MemGraph::vertex_descriptor, MemGraph::vertex_descriptor> removed_
 
 Detected detect_from_subtype(std::vector<MemGraph::vertex_descriptor> &subgraph) {
   Detected ret = MAYBE;
-  std::cerr << "size: " << subgraph.size() << std::endl;
-    if (subgraph.size() == 1) {
+  if (subgraph.size() == 1) {
     ret = ARRAY;
   }
   else {
@@ -118,7 +117,6 @@ Detected detect_from_subtype(std::vector<MemGraph::vertex_descriptor> &subgraph)
       unsigned in = boost::in_degree(vd, graph);
       unsigned out = boost::out_degree(vd, graph);
 
-      std::cerr << "in: " << in << " out " << out << " i: " << vd << std::endl;
       if (in > 1 || out > 1) {
         is_ll = false;
         break;
@@ -171,7 +169,6 @@ unsigned weak_components(MemGraph &graph) {
 size_t get_detected(DataType ***out) {
 
   std::vector<MemGraph::edge_descriptor> del_edges;
-  std::cerr << "BEGIN SPLITTING" << std::endl;
   for (auto [eit, e_end] = boost::edges(graph); eit != e_end; ++eit) {
     MemGraph::vertex_descriptor vt = boost::target(*eit, graph) ;
     MemGraph::vertex_descriptor vs = boost::source(*eit, graph) ;
@@ -180,7 +177,6 @@ size_t get_detected(DataType ***out) {
     
     if (nt.code() != ns.code()) {
 
-      std::cerr << "removed: " << vs << " to " << vt << std::endl;
       removed_edges.insert(std::make_pair(vs, vt));
       del_edges.push_back(*eit);
       boost::put(&vertex_property::has_substructure, graph, vs, true);
@@ -202,11 +198,9 @@ size_t get_detected(DataType ***out) {
     root_components.insert(i);
   }
   
-  std::cerr << "Num split edges: " << del_edges.size() << std::endl;
   for (auto vd : boost::make_iterator_range(vertices(graph))) {
     unsigned component = graph[vd].component;
     components[component].push_back(vd);
-    std::cerr << "COMPONENT: " << component << " vd: " << vd <<  std::endl;
     // if vertex is at edge of component, store
     if (boost::get(&vertex_property::has_substructure, graph, vd)) {
       // we need to extract the components which no component points to 
@@ -315,8 +309,6 @@ bool match_root(char *addr, memory_node &node) {
 
 void mark_root(const char* label, void *ptr,
     size_t size, const char* file, unsigned line) {
-  fprintf(stderr, "ROOT at ptr %p, extent %lu, label %s, file %s:%d\n",
-      ptr, size, label, file, line);
 
   memory_node nd(static_cast<char*>(ptr), size); 
   root_nodes.push_back(nd);;
@@ -329,8 +321,6 @@ void check_ptr(void *ptr, const char *file, unsigned line) {
                          [=](memory_node n) { return match_root(static_cast<char*>(ptr), n); });
   
   if (it != root_nodes.end()) {
-    fprintf(stderr, "ptr %p (%s:%d) belongs to root %p\n",
-      ptr, file, line, it->addr);
   }
 }
 
@@ -348,12 +338,9 @@ void handle_store(void *vtarget, void *vsource) {
     long offset = target - target_node.addr;
     if (offset > max_offset)
       max_offset = offset;
-    fprintf(stderr, "offset: %ld\n", offset);
 
     if (s_found != end) {
       si = s_found - root_nodes.begin();
-      fprintf(stderr, "handling store..... %p into %p\n", source, target);
-      fprintf(stderr, "adding edge from %ld to %ld\n", ti, si);
 
       /* add edges in reverse order so first alloc is root */
       auto[edge, added] = boost::add_edge(vds[ti], vds[si], graph);
@@ -364,7 +351,6 @@ void handle_store(void *vtarget, void *vsource) {
         MemGraph::edge_descriptor prev_store;
         if (it->second.has_value()) {
           prev_store = it->second.value();
-          std::cerr << "deleting bgl edge: " << prev_store << std::endl;
           boost::remove_edge(prev_store, graph);
         }
       }
