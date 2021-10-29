@@ -54,6 +54,8 @@ struct location {
   unsigned line;
 };
 
+
+// Need monotonic counter on allocation number?
 struct memory_node {
   char *addr;
   size_t extent;
