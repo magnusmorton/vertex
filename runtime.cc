@@ -49,11 +49,17 @@ ComponentGraph structures;
 
 unsigned max_offset = 0;
 
+struct location {
+  std::string file;
+  unsigned line;
+};
+
 struct memory_node {
   char *addr;
   size_t extent;
+  location &where_defined;
   std::map<unsigned long, std::optional<MemGraph::edge_descriptor>> slots;
-  memory_node(char *a, size_t ex) : addr(a), extent(ex)
+  memory_node(char *a, size_t ex, location& loc) : addr(a), extent(ex), where_defined(loc)
   {}
 
   // needs to be called again if slots is updated
@@ -85,6 +91,8 @@ unsigned memory_node::compute_code() {
   _code = acc;
   return _code;
 }
+
+
 
 std::ostream& operator<<(std::ostream& os, memory_node& obj) {
   os << "Addr: " << obj.addr << " extent: " << obj.extent << " slots: " << obj.slots.size(); 
@@ -309,8 +317,8 @@ bool match_root(char *addr, memory_node &node) {
 
 void mark_root(const char* label, void *ptr,
     size_t size, const char* file, unsigned line) {
-
-  memory_node nd(static_cast<char*>(ptr), size); 
+  location loc = {file, line};
+  memory_node nd(static_cast<char*>(ptr), size, loc); 
   root_nodes.push_back(nd);;
   vds.push_back(boost::add_vertex(graph));
 
