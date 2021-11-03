@@ -235,7 +235,7 @@ size_t get_detected(DataType ***out) {
   for (unsigned comp : root_components) {
     unsigned curr = comp;
     bool end = false;
-    DataType *top = make_datatype(component_types[curr], NULL);
+    DataType *top = make_datatype(component_types[curr], nullptr);
     DataType *parent = top;
     while (!end) {
       
@@ -245,7 +245,7 @@ size_t get_detected(DataType ***out) {
         end = true;
         break;
       } else {
-        parent->inner = make_datatype(component_types[curr], NULL);
+        parent->inner = make_datatype(component_types[curr], nullptr);
         parent = parent->inner;
       }
     }

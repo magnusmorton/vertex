@@ -66,10 +66,10 @@ PreservedAnalyses MemPass::run(Module &M, ModuleAnalysisManager &MAM) {
   
 
   // are we debug?
-  debug = M.getNamedMetadata("llvm.dbg.cu") != NULL;
+  debug = M.getNamedMetadata("llvm.dbg.cu") != nullptr;
 
   // I have no idea of what the priority value means, but it doesn't matter
-  appendToGlobalDtors(M, cast<Function>(finish_func.getCallee()), 99, NULL);
+  appendToGlobalDtors(M, cast<Function>(finish_func.getCallee()), 99, nullptr);
   
   visit(M);
   return PreservedAnalyses::none();
