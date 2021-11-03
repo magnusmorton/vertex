@@ -238,8 +238,6 @@ size_t get_detected(DataType ***out) {
     DataType *top = make_datatype(component_types[curr], nullptr);
     DataType *parent = top;
     while (!end) {
-      
-      // TODO: badness is here most likely
       curr = component_map[curr];
       if (curr == -1) {
         end = true;
