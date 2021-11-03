@@ -68,7 +68,7 @@ PreservedAnalyses MemPass::run(Module &M, ModuleAnalysisManager &MAM) {
   // are we debug?
   debug = M.getNamedMetadata("llvm.dbg.cu") != NULL;
 
-  /* I have no idea of what the priority value means, but it doesn't matter */
+  // I have no idea of what the priority value means, but it doesn't matter
   appendToGlobalDtors(M, cast<Function>(finish_func.getCallee()), 99, NULL);
   
   visit(M);
@@ -122,7 +122,7 @@ void handleAlloca(AllocaInst &allInst, DILocation *loc) {
   assert(alloc_size.hasValue());
   size_t size = alloc_size.getValue() / 8;
 
-  // don't care about anything smaller
+  // don't care about anything smaller. Maybe should use a larger number?
   if (size > 8) {
     buildLabelCall(allInst, ConstantInt::get(int64ty, alloc_size.getValue() / 8), "stack", loc);
   }
@@ -150,7 +150,6 @@ void MemPass::visitLoadInst(LoadInst &loadInst) {
 }
 
 void MemPass::visitStoreInst(StoreInst &storeInst) {
-  // TODO: implement
   Value *ptr = storeInst.getPointerOperand();
   Value *source = storeInst.getValueOperand();
   IRBuilder<> builder(storeInst.getNextNode());
@@ -170,7 +169,7 @@ void MemPass::visitAtomicCmpXchgInst(AtomicCmpXchgInst &inst) {
 }
 
 void MemPass::visitMemIntrinsic(MemIntrinsic &intr) {
-  //not sure what todo here
+  // not sure what to do here
 }
 
 extern "C" ::llvm::PassPluginLibraryInfo LLVM_ATTRIBUTE_WEAK
