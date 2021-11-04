@@ -162,9 +162,6 @@ Detected detect_from_subtype(std::vector<MemGraph::vertex_descriptor> &subgraph)
   return ret;
 }
 
-/* Detected detect_all(unsigned component, const std::vector<long> &compenent_map, const std::map<unsigned, Detected> &component_types) { */
-/*   long child = component_map; */
-/* } */
 
 unsigned weak_components(MemGraph &graph) {
   UGraph copy;
@@ -179,7 +176,6 @@ unsigned weak_components(MemGraph &graph) {
   
   return number_of_components;
 }
-
 
 
 size_t get_detected(DataType ***out) {
