@@ -57,12 +57,15 @@ struct location {
 
 // Need monotonic counter on allocation number?
 struct memory_node {
+  unsigned counter;
   char *addr;
   size_t extent;
   location &where_defined;
   std::map<unsigned long, std::optional<MemGraph::edge_descriptor>> slots;
   memory_node(char *a, size_t ex, location& loc) : addr(a), extent(ex), where_defined(loc)
-  {}
+  {
+    counter = total_count++;
+  }
 
   // needs to be called again if slots is updated
   unsigned compute_code();
@@ -74,9 +77,12 @@ struct memory_node {
     return _code;
   } 
 private:
+  static unsigned total_count;
   unsigned _code = 0;
   bool calculated = false;
 };
+
+unsigned memory_node::total_count = 0;
 
 unsigned memory_node::compute_code() {
   unsigned acc = 0;
