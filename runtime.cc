@@ -60,7 +60,7 @@ struct memory_node {
   unsigned counter;
   char *addr;
   size_t extent;
-  location &where_defined;
+  location where_defined;
   std::map<unsigned long, std::optional<MemGraph::edge_descriptor>> slots;
   memory_node(char *a, size_t ex, location& loc) : addr(a), extent(ex), where_defined(loc)
   {
