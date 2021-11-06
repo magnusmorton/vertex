@@ -7,6 +7,7 @@
 #include <cstdlib>
 #include <iostream>
 #include <map>
+#include <memory>
 #include <optional>
 #include <vector>
 
@@ -62,7 +63,7 @@ struct memory_node {
   size_t extent;
   location where_defined;
   std::map<unsigned long, std::optional<MemGraph::edge_descriptor>> slots;
-  memory_node(char *a, size_t ex, location& loc) : addr(a), extent(ex), where_defined(loc)
+  memory_node(char *a, size_t ex, location loc) : addr(a), extent(ex), where_defined(loc)
   {
     counter = total_count++;
   }
@@ -114,9 +115,9 @@ DataType* make_datatype(Detected d, DataType *subtype) {
   return out;
 }
 
-std::vector<memory_node> root_nodes;
+std::vector<std::shared_ptr<memory_node>> root_nodes;
 std::multimap<MemGraph::vertex_descriptor, MemGraph::vertex_descriptor> removed_edges;
-
+std::map<unsigned, std::shared_ptr<memory_node>> component_original_nodes;
 
 Detected detect_from_subtype(std::vector<MemGraph::vertex_descriptor> &subgraph) {
   Detected ret = MAYBE;
@@ -184,10 +185,10 @@ size_t get_detected(DataType ***out) {
   for (auto [eit, e_end] = boost::edges(graph); eit != e_end; ++eit) {
     MemGraph::vertex_descriptor vt = boost::target(*eit, graph) ;
     MemGraph::vertex_descriptor vs = boost::source(*eit, graph) ;
-    memory_node& nt = root_nodes[vt];
-    memory_node& ns = root_nodes[vs];
+    std::shared_ptr<memory_node> nt = root_nodes[vt];
+    std::shared_ptr<memory_node> ns = root_nodes[vs];
     
-    if (nt.code() != ns.code()) {
+    if (nt->code() != ns->code()) {
 
       removed_edges.insert(std::make_pair(vs, vt));
       del_edges.push_back(*eit);
@@ -213,6 +214,17 @@ size_t get_detected(DataType ***out) {
   for (auto vd : boost::make_iterator_range(vertices(graph))) {
     unsigned component = graph[vd].component;
     components[component].push_back(vd);
+    std::shared_ptr<memory_node> node = root_nodes[vd];
+    auto it = component_original_nodes.find(component);
+    if (it != component_original_nodes.end()) {
+      if (node->counter < it->second->counter)
+        component_original_nodes[component] = node;
+      
+    }
+    else {
+      component_original_nodes[component] = node;
+    }
+
     // if vertex is at edge of component, store
     if (boost::get(&vertex_property::has_substructure, graph, vd)) {
       // we need to extract the components which no component points to 
@@ -313,22 +325,21 @@ void finish_san() {
 }
 
 
-bool match_root(char *addr, memory_node &node) {
-  return addr >= node.addr && addr < node.addr + node.extent;
+bool match_root(char *addr, std::shared_ptr<memory_node> node) {
+  return addr >= node->addr && addr < node->addr + node->extent;
 }
 
 void mark_root(const char* label, void *ptr,
     size_t size, const char* file, unsigned line) {
   location loc = {file, line};
-  memory_node nd(static_cast<char*>(ptr), size, loc); 
-  root_nodes.push_back(nd);;
+  root_nodes.push_back(std::make_shared<memory_node>(static_cast<char*>(ptr), size, loc));;
   vds.push_back(boost::add_vertex(graph));
 
 }
 
 void check_ptr(void *ptr, const char *file, unsigned line) {
   auto it = std::find_if(root_nodes.begin(), root_nodes.end(),
-                         [=](memory_node n) { return match_root(static_cast<char*>(ptr), n); });
+                         [=](std::shared_ptr<memory_node> n) { return match_root(static_cast<char*>(ptr), n); });
   
   if (it != root_nodes.end()) {
   }
@@ -338,14 +349,14 @@ void handle_store(void *vtarget, void *vsource) {
   unsigned long ti, si;
   char *target = static_cast<char*>(vtarget);
   char *source = static_cast<char*>(vsource);
-  auto t_found = std::find_if(root_nodes.begin(), root_nodes.end(), [=](memory_node n) { return match_root(target,n);});
-  auto s_found = std::find_if(root_nodes.begin(), root_nodes.end(), [=](memory_node n) { return match_root(source,n);});
+  auto t_found = std::find_if(root_nodes.begin(), root_nodes.end(), [=](std::shared_ptr<memory_node> n) { return match_root(target,n);});
+  auto s_found = std::find_if(root_nodes.begin(), root_nodes.end(), [=](std::shared_ptr<memory_node> n) { return match_root(source,n);});
   
   auto end = std::end(root_nodes);
   if (t_found != end) {
     ti = t_found - root_nodes.begin();
-    memory_node& target_node = *t_found;
-    long offset = target - target_node.addr;
+    std::shared_ptr<memory_node> target_node = *t_found;
+    long offset = target - target_node->addr;
     if (offset > max_offset)
       max_offset = offset;
 
@@ -355,8 +366,8 @@ void handle_store(void *vtarget, void *vsource) {
       /* add edges in reverse order so first alloc is root */
       auto[edge, added] = boost::add_edge(vds[ti], vds[si], graph);
 
-      auto it = target_node.slots.find(offset);
-      if (it != target_node.slots.end()) {
+      auto it = target_node->slots.find(offset);
+      if (it != target_node->slots.end()) {
       
         MemGraph::edge_descriptor prev_store;
         if (it->second.has_value()) {
@@ -364,10 +375,10 @@ void handle_store(void *vtarget, void *vsource) {
           boost::remove_edge(prev_store, graph);
         }
       }
-      target_node.slots[offset] = edge;
+      target_node->slots[offset] = edge;
     }
     else if (!vsource) {
-      target_node.slots[offset] = {};
+      target_node->slots[offset] = {};
     }
   }
 }
