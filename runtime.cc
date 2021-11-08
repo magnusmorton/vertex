@@ -66,7 +66,7 @@ struct memory_node {
   memory_node(char *a, size_t ex, location loc) : addr(a), extent(ex), where_defined(loc)
   {
     counter = total_count++;
-  }
+  }  
 
   // needs to be called again if slots is updated
   unsigned compute_code();
@@ -254,7 +254,7 @@ size_t get_detected(DataType ***out) {
     unsigned curr = comp;
     bool end = false;
     memory_node& original = *component_original_nodes[curr];
-    DataType *top = make_datatype(component_types[curr], nullptr, original.where_defined.file.c_str());
+    DataType *top = make_datatype(component_types[curr], nullptr, original.where_defined.file.c_str(), original.where_defined.line);
     DataType *parent = top;
     while (!end) {
       curr = component_map[curr];
@@ -298,7 +298,12 @@ void decode_enum(Detected type, std::ostream& out) {
 void decode_datatype(DataType *dt, std::ostream& out) {
   DataType *curr = dt;
   while (curr) {
+    if (curr->line) {
+      out << "(" << curr->filename << ":" << curr->line << ") ";
+
+    }
     decode_enum(curr->type, out);
+    
     if (curr->inner) {
       out << " of" << std::endl << "\t";
     }
