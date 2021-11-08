@@ -216,6 +216,8 @@ size_t get_detected(DataType ***out) {
     components[component].push_back(vd);
     std::shared_ptr<memory_node> node = root_nodes[vd];
     auto it = component_original_nodes.find(component);
+
+    // TODO: come back and simplify this
     if (it != component_original_nodes.end()) {
       if (node->counter < it->second->counter)
         component_original_nodes[component] = node;
