@@ -21,6 +21,8 @@ typedef enum Detected {
 struct DataType {
 	enum Detected type;
 	struct DataType *inner;
+	const char *filename;
+	unsigned line;
 };
 
 #ifdef __cplusplus

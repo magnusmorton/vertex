@@ -108,10 +108,12 @@ std::ostream& operator<<(std::ostream& os, memory_node& obj) {
   return os;
 }
 
-DataType* make_datatype(Detected d, DataType *subtype) {
+DataType* make_datatype(Detected d, DataType *subtype = nullptr, const char *file=nullptr, unsigned line = 0) {
   DataType *out = static_cast<DataType*>(malloc(sizeof(DataType)));
   out->type = d;
   out->inner = subtype;
+  out->filename = file;
+  out->line = line;
   return out;
 }
 
@@ -251,7 +253,8 @@ size_t get_detected(DataType ***out) {
   for (unsigned comp : root_components) {
     unsigned curr = comp;
     bool end = false;
-    DataType *top = make_datatype(component_types[curr], nullptr);
+    memory_node& original = *component_original_nodes[curr];
+    DataType *top = make_datatype(component_types[curr], nullptr, original.where_defined.file.c_str());
     DataType *parent = top;
     while (!end) {
       curr = component_map[curr];
@@ -259,7 +262,7 @@ size_t get_detected(DataType ***out) {
         end = true;
         break;
       } else {
-        parent->inner = make_datatype(component_types[curr], nullptr);
+        parent->inner = make_datatype(component_types[curr]);
         parent = parent->inner;
       }
     }
