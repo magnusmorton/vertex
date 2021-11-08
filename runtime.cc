@@ -325,8 +325,8 @@ void finish_san() {
 }
 
 
-bool match_root(char *addr, std::shared_ptr<memory_node> node) {
-  return addr >= node->addr && addr < node->addr + node->extent;
+bool match_root(char *addr, memory_node& node) {
+  return addr >= node.addr && addr < node.addr + node.extent;
 }
 
 void mark_root(const char* label, void *ptr,
@@ -339,7 +339,7 @@ void mark_root(const char* label, void *ptr,
 
 void check_ptr(void *ptr, const char *file, unsigned line) {
   auto it = std::find_if(root_nodes.begin(), root_nodes.end(),
-                         [=](std::shared_ptr<memory_node> n) { return match_root(static_cast<char*>(ptr), n); });
+                         [=](std::shared_ptr<memory_node> n) { return match_root(static_cast<char*>(ptr), *n); });
   
   if (it != root_nodes.end()) {
   }
@@ -349,8 +349,8 @@ void handle_store(void *vtarget, void *vsource) {
   unsigned long ti, si;
   char *target = static_cast<char*>(vtarget);
   char *source = static_cast<char*>(vsource);
-  auto t_found = std::find_if(root_nodes.begin(), root_nodes.end(), [=](std::shared_ptr<memory_node> n) { return match_root(target,n);});
-  auto s_found = std::find_if(root_nodes.begin(), root_nodes.end(), [=](std::shared_ptr<memory_node> n) { return match_root(source,n);});
+  auto t_found = std::find_if(root_nodes.begin(), root_nodes.end(), [=](std::shared_ptr<memory_node> n) { return match_root(target, *n);});
+  auto s_found = std::find_if(root_nodes.begin(), root_nodes.end(), [=](std::shared_ptr<memory_node> n) { return match_root(source, *n);});
   
   auto end = std::end(root_nodes);
   if (t_found != end) {
