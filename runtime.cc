@@ -219,15 +219,10 @@ size_t get_detected(DataType ***out) {
     std::shared_ptr<memory_node> node = root_nodes[vd];
     auto it = component_original_nodes.find(component);
 
-    // TODO: come back and simplify this
-    if (it != component_original_nodes.end()) {
-      if (node->counter < it->second->counter)
+    // Update the original node for the component if a) one doesn't exist or b)
+    // node is older than the one currently stored for the component.
+    if (it == component_original_nodes.end() || node->counter < it->second->counter)
         component_original_nodes[component] = node;
-      
-    }
-    else {
-      component_original_nodes[component] = node;
-    }
 
     // if vertex is at edge of component, store
     if (boost::get(&vertex_property::has_substructure, graph, vd)) {
