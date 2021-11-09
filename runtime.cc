@@ -56,13 +56,15 @@ struct location {
 };
 
 
-// Need monotonic counter on allocation number?
+// Represents an allocated memory location
 struct memory_node {
   unsigned counter;
   char *addr;
   size_t extent;
   location where_defined;
   std::map<unsigned long, std::optional<MemGraph::edge_descriptor>> slots;
+
+  // Update counter everytime we construct a memory_node
   memory_node(char *a, size_t ex, location loc) : addr(a), extent(ex), where_defined(loc)
   {
     counter = total_count++;
@@ -85,6 +87,8 @@ private:
 
 unsigned memory_node::total_count = 0;
 
+// Calculate unique(?) code based on the memory addresses of pointers stored
+// in this block of memory
 unsigned memory_node::compute_code() {
   unsigned acc = 0;
   for(auto it = slots.begin(); it != slots.end(); ++it) {
@@ -108,6 +112,7 @@ std::ostream& operator<<(std::ostream& os, memory_node& obj) {
   return os;
 }
 
+// DataType constructor. All pointer arguments can be nullptr
 DataType* make_datatype(Detected d, DataType *subtype = nullptr, const char *file=nullptr, unsigned line = 0) {
   DataType *out = static_cast<DataType*>(malloc(sizeof(DataType)));
   out->type = d;
@@ -117,7 +122,13 @@ DataType* make_datatype(Detected d, DataType *subtype = nullptr, const char *fil
   return out;
 }
 
+// Having separate maps/vectors for everything is much easier than storing all
+// this stuff in a boost::graph
+
+// vector of memory_nodes detected on allocation
 std::vector<std::shared_ptr<memory_node>> root_nodes;
+
+//
 std::multimap<MemGraph::vertex_descriptor, MemGraph::vertex_descriptor> removed_edges;
 std::map<unsigned, std::shared_ptr<memory_node>> component_original_nodes;
 
