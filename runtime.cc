@@ -27,10 +27,6 @@ struct vertex_property {
   bool has_substructure = false;
 };
 
-struct component_vertex {
-  Detected type;
-};
-
 struct edge_property {
 };
 
@@ -46,11 +42,8 @@ typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS,
                               vertex_property> UGraph;
 
-typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::directedS,
-                              component_vertex> ComponentGraph;
 std::vector<MemGraph::vertex_descriptor> vds;
 MemGraph graph;
-ComponentGraph structures;
 
 unsigned max_offset = 0;
 
@@ -262,9 +255,7 @@ size_t get_detected(DataType ***out) {
 
   *out = static_cast<DataType**>(malloc(sizeof(DataType*) * root_components.size()));
   for (auto it = components.begin(); it != components.end(); ++it){
-    ComponentGraph::vertex_descriptor vd = boost::add_vertex(structures);
     unsigned i = it - components.begin();
-    assert(vd == i);
     Detected ds_type = detect_from_subtype(*it);
     component_types[i] = ds_type;
   }
