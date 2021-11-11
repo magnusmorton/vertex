@@ -18,8 +18,6 @@
 
 #include "runtime.h"
 
-#define ROOT_CHUNK 512
-
 // custom graph properties
 
 struct vertex_property {
