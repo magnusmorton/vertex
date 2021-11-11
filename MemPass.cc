@@ -2,6 +2,9 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// A note on names: When I started this, I spent a long time looking at the
+// DataFlow sanitizer, which has things called labels. I never got round to
+// removing the word label from this
  
 #include <iostream>
 #include <vector>
@@ -18,15 +21,18 @@
 #include "MemPass.h"
 
 using namespace llvm;
-
+// LLVM specific delclarations
 FunctionCallee create_func, check_func, store_func, finish_func;
 
+// Flag if we are in debug mode
 bool debug;
 
+// LLVM specific delclarations
 Type* int64ty;
 Type* charstar;
 const DataLayout *dataLayout;
 
+// This is the top-level function called when running the pass
 PreservedAnalyses MemPass::run(Module &M, ModuleAnalysisManager &MAM) {
   std::cout << "mempass running.....\n";
   dataLayout = &M.getDataLayout();
@@ -75,6 +81,7 @@ PreservedAnalyses MemPass::run(Module &M, ModuleAnalysisManager &MAM) {
   return PreservedAnalyses::none();
 };
 
+// Get line number and filename of declaration
 std::pair<unsigned, Value*> getMetaData(IRBuilder<> &builder, DILocation *loc) {
   unsigned line;
   Value *file;
@@ -88,6 +95,7 @@ std::pair<unsigned, Value*> getMetaData(IRBuilder<> &builder, DILocation *loc) {
   return std::make_pair(line, file);
 }
 
+// Build IR for call to allocation handling function
 void buildLabelCall(Instruction &inst, Value* size, std::string label, DILocation *loc) {
   IRBuilder<> builder(inst.getNextNode());
   std::vector<Value*> args;
@@ -172,6 +180,7 @@ void MemPass::visitMemIntrinsic(MemIntrinsic &intr) {
   // not sure what to do here
 }
 
+// This is where we register the the pass
 extern "C" ::llvm::PassPluginLibraryInfo LLVM_ATTRIBUTE_WEAK
 llvmGetPassPluginInfo() {
   return {LLVM_PLUGIN_API_VERSION, "MemPass", "v0.1", [](PassBuilder &PB) {

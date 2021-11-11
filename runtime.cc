@@ -20,6 +20,8 @@
 
 #define ROOT_CHUNK 512
 
+// custom graph properties
+
 struct vertex_property {
   int component;
   bool has_substructure = false;
@@ -36,9 +38,11 @@ struct graph_property {
   unsigned number_of_components;
 };
 
+// The main memory graph type
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::bidirectionalS,
                               vertex_property> MemGraph;
 
+// An undirected graph we use for weakly connected components
 typedef boost::adjacency_list<boost::vecS, boost::vecS, boost::undirectedS,
                               vertex_property> UGraph;
 
@@ -50,6 +54,7 @@ ComponentGraph structures;
 
 unsigned max_offset = 0;
 
+// An allocation location
 struct location {
   std::string file;
   unsigned line;
@@ -62,6 +67,8 @@ struct memory_node {
   char *addr;
   size_t extent;
   location where_defined;
+  // slots holds the offsets to the base address in memory where other pointers
+  // are stored
   std::map<unsigned long, std::optional<MemGraph::edge_descriptor>> slots;
 
   // Update counter everytime we construct a memory_node
@@ -72,6 +79,8 @@ struct memory_node {
 
   // needs to be called again if slots is updated
   unsigned compute_code();
+
+  // A code to distinguish between different data-structures of the same type
   unsigned code() {
     if (!calculated) {
       compute_code();
@@ -128,10 +137,14 @@ DataType* make_datatype(Detected d, DataType *subtype = nullptr, const char *fil
 // vector of memory_nodes detected on allocation
 std::vector<std::shared_ptr<memory_node>> root_nodes;
 
-//
+// Holds a map of edges that are removed during component splitting
 std::multimap<MemGraph::vertex_descriptor, MemGraph::vertex_descriptor> removed_edges;
+
+// A map containing the first nodes allocated that belong to a component
 std::map<unsigned, std::shared_ptr<memory_node>> component_original_nodes;
 
+
+// Detects a single non-nested data type from a graph component
 Detected detect_from_subtype(std::vector<MemGraph::vertex_descriptor> &subgraph) {
   Detected ret = MAYBE;
   if (subgraph.size() == 1) {
@@ -176,7 +189,7 @@ Detected detect_from_subtype(std::vector<MemGraph::vertex_descriptor> &subgraph)
   return ret;
 }
 
-
+// Calculate weakly connected components
 unsigned weak_components(MemGraph &graph) {
   UGraph copy;
   
@@ -191,7 +204,7 @@ unsigned weak_components(MemGraph &graph) {
   return number_of_components;
 }
 
-
+// Get detected data structures
 size_t get_detected(DataType ***out) {
 
   std::vector<MemGraph::edge_descriptor> del_edges;
@@ -318,6 +331,8 @@ void decode_datatype(DataType *dt, std::ostream& out) {
   out << std::endl;
 }
 
+
+// function run on shutdown
 void finish_san() {
   std::ofstream file;
   file.open("graph.dot");
@@ -345,6 +360,8 @@ bool match_root(char *addr, memory_node& node) {
   return addr >= node.addr && addr < node.addr + node.extent;
 }
 
+
+// mark allocation
 void mark_root(const char* label, void *ptr,
     size_t size, const char* file, unsigned line) {
   location loc = {file, line};
@@ -361,6 +378,8 @@ void check_ptr(void *ptr, const char *file, unsigned line) {
   }
 }
 
+
+// handle store instructions
 void handle_store(void *vtarget, void *vsource) {
   unsigned long ti, si;
   char *target = static_cast<char*>(vtarget);

@@ -11,6 +11,9 @@
 #include "llvm/Pass.h"
 
 namespace llvm {
+
+// This is a new-style LLVM pass for instrumenting memory allocations, loads and
+// stores
 class MemPass : public PassInfoMixin<MemPass>,
                   public InstVisitor<MemPass> {
 public:
