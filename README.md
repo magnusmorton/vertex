@@ -56,3 +56,12 @@ graph are used to determine the data structures used
   betweenness centrality calculated on it, can we synthesise new code that does
   the same thing using a new graph library and perhaps a different
   representation?
+
+
+## Other things tried
+I spent a long time trying to figure out how to use the LLVM Dataflow sanitizer
+framework to do this, but I ended up deciding it would be simpler and quicker to
+do it the way I have. 
+
+I originally wrote the whole thing in C with the igraph graph library, but C++
+and boost (despite its problems) again simplified things greatly
